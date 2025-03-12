@@ -69,22 +69,18 @@ class BackupDestinationListRecords extends Component implements HasForms, HasTab
                 Tables\Actions\Action::make('download')
                     ->label(__('filament-spatie-backup::backup.components.backup_destination_list.table.actions.download'))
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(auth()->user()->can('download-backup'))
                     ->action(fn (BackupDestination $record) => Storage::disk($record->disk)->download($record->path)),
 
                 Tables\Actions\Action::make('delete')
                     ->label(__('filament-spatie-backup::backup.components.backup_destination_list.table.actions.delete'))
                     ->icon('heroicon-o-trash')
-                    ->visible(auth()->user()->can('delete-backup'))
                     ->requiresConfirmation()
                     ->color('danger')
                     ->modalIcon('heroicon-o-trash')
                     ->action(function (BackupDestination $record) {
                         SpatieBackupDestination::create($record->disk, config('backup.backup.name'))
                             ->backups()
-                            ->first(function (Backup $backup) use ($record) {
-                                return $backup->path() === $record->path;
-                            })
+                            ->first(fn(Backup $backup) => $backup->path() === $record->path)
                             ->delete();
 
                         Notification::make()

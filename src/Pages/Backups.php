@@ -12,7 +12,7 @@ use Juniyasyos\FilamentLaravelBackup\Jobs\CreateBackupJob;
 
 class Backups extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-cog';
+    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down ';
 
     protected static string $view = 'filament-spatie-backup::pages.backups';
 
