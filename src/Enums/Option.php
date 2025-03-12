@@ -1,6 +1,6 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Enums;
+namespace Juniyasyos\FilamentLaravelBackup\Enums;
 
 enum Option: string
 {

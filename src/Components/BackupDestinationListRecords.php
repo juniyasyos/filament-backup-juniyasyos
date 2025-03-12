@@ -1,6 +1,6 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Components;
+namespace Juniyasyos\FilamentLaravelBackup\Components;
 
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -13,9 +13,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackup;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Models\BackupDestination;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackup;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\Models\BackupDestination;
 use Spatie\Backup\BackupDestination\Backup;
 use Spatie\Backup\BackupDestination\BackupDestination as SpatieBackupDestination;
 
@@ -63,7 +63,7 @@ class BackupDestinationListRecords extends Component implements HasForms, HasTab
             ->filters([
                 Tables\Filters\SelectFilter::make('disk')
                     ->label(__('filament-spatie-backup::backup.components.backup_destination_list.table.filters.disk'))
-                    ->options(FilamentSpatieLaravelBackup::getFilterDisks()),
+                    ->options(FilamentLaravelBackup::getFilterDisks()),
             ])
             ->actions([
                 Tables\Actions\Action::make('download')
@@ -101,7 +101,7 @@ class BackupDestinationListRecords extends Component implements HasForms, HasTab
     #[Computed]
     public function interval(): string
     {
-        /** @var FilamentSpatieLaravelBackupPlugin $plugin */
+        /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
         return $plugin->getPolingInterval();

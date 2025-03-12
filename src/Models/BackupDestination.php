@@ -1,9 +1,9 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Models;
+namespace Juniyasyos\FilamentLaravelBackup\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackup;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackup;
 use Sushi\Sushi;
 
 /**
@@ -18,8 +18,8 @@ class BackupDestination extends Model
     {
         $data = [];
 
-        foreach (FilamentSpatieLaravelBackup::getDisks() as $disk) {
-            $data = array_merge($data, FilamentSpatieLaravelBackup::getBackupDestinationData($disk));
+        foreach (FilamentLaravelBackup::getDisks() as $disk) {
+            $data = array_merge($data, FilamentLaravelBackup::getBackupDestinationData($disk));
         }
 
         return $data;

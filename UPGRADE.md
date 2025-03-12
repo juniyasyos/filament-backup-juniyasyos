@@ -1,14 +1,16 @@
-# Upgrade Guide
+# Filament Spatie Laravel Backup Plugin
 
-## Upgrading from v1.x to v2.0
+Plugin ini menyediakan integrasi **Spatie Laravel Backup** dengan **Filament v3**, memungkinkan Anda untuk mengelola backup langsung dari panel Filament.
 
-Starting with version v2.0, this package now only supports Filament v3.x.
+## 📦 Instalasi
 
-Follow these steps to update the package for Filament v3.x.
+Jalankan perintah berikut untuk menginstal paket ini:
 
-1. Update the package version in your `composer.json`.
-2. Run `composer update`.
-3. Register the plugin inside of your project's `PanelProvider`, e.g. `AdminPanelProvider`.
+```sh
+composer require juniyasyos/filament-spatie-laravel-backup
+```
+
+Setelah itu, daftarkan plugin di dalam **PanelProvider** Anda:
 
 ```php
 <?php
@@ -17,26 +19,29 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            // ...
-            ->plugin(FilamentSpatieLaravelBackupPlugin::make());
+            ->plugin(FilamentLaravelBackupPlugin::make());
     }
 }
 ```
 
-4. Publish the plugin assets.
+Kemudian, publikasikan aset plugin:
 
 ```sh
 php artisan filament:assets
 ```
 
-5. If you previously used the configuration file to change the `backups`, `interval` & `queue`  value, those no longer exist and need to be updated to method calls on the plugin object.
+---
+
+## ⚙️ Konfigurasi
+
+Anda dapat mengatur berbagai opsi plugin menggunakan method chaining pada objek plugin:
 
 ```php
 <?php
@@ -46,23 +51,71 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use App\Filament\Pages\Backups;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
-                    ->usingPage(Backups::class)
-                    ->usingQueue('my-queue')
-                    ->usingPolingInterval('10s') // default value is 4s
-                    ->statusListRecordsTable(false) // default value is true
+                FilamentLaravelBackupPlugin::make()
+                    ->usingPage(Backups::class) // Gunakan halaman kustom untuk backup
+                    ->usingQueue('backup-queue') // Tentukan queue untuk proses backup
+                    ->usingPollingInterval('10s') // Interval polling (default: 4s)
+                    ->statusListRecordsTable(false) // Sembunyikan tabel status backup (default: true)
+                    ->showBackupSize(true) // Tampilkan ukuran backup
+                    ->allowManualBackup(true) // Izinkan backup manual
             );
     }
 }
 ```
 
-If you have any issues with the upgrade, please open an issue and provide details. Reproduction repositories are much appreciated.
+---
+
+## 🚀 Fitur
+
+✅ **Integrasi penuh dengan Filament v3**  
+✅ **Dukungan antrian (Queue) untuk backup**  
+✅ **Konfigurasi polling interval**  
+✅ **Tabel status backup yang dapat disembunyikan**  
+✅ **Dukungan halaman kustom untuk manajemen backup**  
+✅ **Menampilkan ukuran backup**  
+✅ **Dukungan backup manual langsung dari panel**  
+
+---
+
+## 🛠️ Cara Menggunakan
+
+Setelah menginstal dan mengonfigurasi plugin, Anda dapat mengakses halaman **Backup** di panel Filament untuk:  
+
+- **Melihat daftar backup yang tersedia**  
+- **Menjalankan backup manual** (jika diizinkan)  
+- **Menghapus backup lama**  
+- **Melihat status backup terbaru**  
+
+---
+
+## ❓ Troubleshooting
+
+Jika Anda mengalami masalah, lakukan langkah berikut:  
+
+1. **Pastikan queue berjalan** jika Anda menggunakan antrian untuk backup:
+   ```sh
+   php artisan queue:work
+   ```
+   
+2. **Periksa konfigurasi backup** di `config/backup.php` untuk memastikan penyimpanan dan strategi backup sudah benar.
+
+3. **Lihat log error** jika terjadi masalah:
+   ```sh
+   tail -f storage/logs/laravel.log
+   ```
+
+Jika masih ada kendala, silakan **buka issue** di repository ini dengan detail error yang jelas.  
+
+---
+
+## 📜 Lisensi
+
+Proyek ini dilisensikan di bawah **MIT License**.

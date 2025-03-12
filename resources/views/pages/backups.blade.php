@@ -2,11 +2,11 @@
     <div class="flex flex-col gap-y-8">
         @if($this->shouldDisplayStatusListRecords())
             <div class="mb-10">
-                @livewire(ShuvroRoy\FilamentSpatieLaravelBackup\Components\BackupDestinationStatusListRecords::class)
+                @livewire(Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationStatusListRecords::class)
             </div>
         @endif
         <div>
-            @livewire(ShuvroRoy\FilamentSpatieLaravelBackup\Components\BackupDestinationListRecords::class)
+            @livewire(Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationListRecords::class)
         </div>
 
         <x-filament::modal id="backup-option" width="lg">

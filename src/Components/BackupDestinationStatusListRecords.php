@@ -1,6 +1,6 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Components;
+namespace Juniyasyos\FilamentLaravelBackup\Components;
 
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -11,8 +11,8 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Models\BackupDestinationStatus;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\Models\BackupDestinationStatus;
 
 class BackupDestinationStatusListRecords extends Component implements HasForms, HasTable
 {
@@ -58,7 +58,7 @@ class BackupDestinationStatusListRecords extends Component implements HasForms, 
     #[Computed]
     public function interval(): string
     {
-        /** @var FilamentSpatieLaravelBackupPlugin $plugin */
+        /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
         return $plugin->getPolingInterval();

@@ -1,20 +1,20 @@
 # Filament Spatie Laravel Backup
 
-[![PHP Version Require](https://poser.pugx.org/shuvroroy/filament-spatie-laravel-backup/require/php)](https://packagist.org/packages/shuvroroy/filament-spatie-laravel-backup)
-[![Latest Stable Version](https://poser.pugx.org/shuvroroy/filament-spatie-laravel-backup/v)](https://packagist.org/packages/shuvroroy/filament-spatie-laravel-backup)
-[![Total Downloads](https://poser.pugx.org/shuvroroy/filament-spatie-laravel-backup/downloads)](https://packagist.org/packages/shuvroroy/filament-spatie-laravel-backup)
-[![License](https://poser.pugx.org/shuvroroy/filament-spatie-laravel-backup/license)](https://packagist.org/packages/shuvroroy/filament-spatie-laravel-backup)
+[![PHP Version Require](https://poser.pugx.org/juniyasyos/filament-backup/require/php)](https://packagist.org/packages/juniyasyos/filament-backup)
+[![Latest Stable Version](https://poser.pugx.org/juniyasyos/filament-backup/v)](https://packagist.org/packages/juniyasyos/filament-backup)
+[![Total Downloads](https://poser.pugx.org/juniyasyos/filament-backup/downloads)](https://packagist.org/packages/juniyasyos/filament-backup)
+[![License](https://poser.pugx.org/juniyasyos/filament-backup/license)](https://packagist.org/packages/juniyasyos/filament-backup)
 
 This package provides a Filament page that you can create backup of your application. You'll find installation instructions and full documentation on [spatie/laravel-backup](https://spatie.be/docs/laravel-backup/v7/introduction).
 
-<img width="1481" alt="Screenshot 2023-08-05 at 2 42 10 PM" src="https://github.com/shuvroroy/filament-spatie-laravel-backup/assets/21066418/68fe1c0b-a130-41ce-8c7f-e5182d743225">
+<img width="1481" alt="Screenshot 2023-08-05 at 2 42 10 PM" src="https://github.com/juniyasyos/filament-backup/assets/21066418/68fe1c0b-a130-41ce-8c7f-e5182d743225">
 
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require shuvroroy/filament-spatie-laravel-backup
+composer require Juniyasyos/filament-backup
 ```
 
 Publish the package's assets:
@@ -40,7 +40,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             // ...
-            ->plugin(FilamentSpatieLaravelBackupPlugin::make());
+            ->plugin(FilamentLaravelBackupPlugin::make());
     }
 }
 ```
@@ -60,7 +60,7 @@ If you want to override the default `Backups` page icon, heading then you can ex
 
 namespace App\Filament\Pages;
 
-use ShuvroRoy\FilamentSpatieLaravelBackup\Pages\Backups as BaseBackups;
+use Juniyasyos\FilamentLaravelBackup\Pages\Backups as BaseBackups;
 
 class Backups extends BaseBackups
 {
@@ -87,7 +87,7 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use App\Filament\Pages\Backups;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -96,7 +96,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                     ->usingPage(Backups::class)
             );
     }
@@ -114,7 +114,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -123,7 +123,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                     ->usingPolingInterval('10s') // default value is 4s
             );
     }
@@ -141,7 +141,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -150,7 +150,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                     ->usingQueue('my-queue') // default value is null
             );
     }
@@ -168,7 +168,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -177,7 +177,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                     ->timeout(120) // default value is max_execution_time from php.ini, or 30s if it wasn't defined
             );
     }
@@ -195,7 +195,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -204,7 +204,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                     ->noTimeout()
             );
     }
@@ -223,7 +223,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -232,7 +232,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             // ...
             ->plugin(
-                FilamentSpatieLaravelBackupPlugin::make()
+                FilamentLaravelBackupPlugin::make()
                      ->authorize(fn (): bool => auth()->user()->email === 'admin@example.com'),
             );
     }

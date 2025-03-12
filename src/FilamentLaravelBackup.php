@@ -1,6 +1,6 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup;
+namespace Juniyasyos\FilamentLaravelBackup;
 
 use Illuminate\Support\Facades\Cache;
 use Spatie\Backup\BackupDestination\Backup;
@@ -10,7 +10,7 @@ use Spatie\Backup\Helpers\Format;
 use Spatie\Backup\Tasks\Monitor\BackupDestinationStatus;
 use Spatie\Backup\Tasks\Monitor\BackupDestinationStatusFactory;
 
-class FilamentSpatieLaravelBackup
+class FilamentLaravelBackup
 {
     public static function getDisks(): array
     {

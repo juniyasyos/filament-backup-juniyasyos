@@ -1,14 +1,14 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Pages;
+namespace Juniyasyos\FilamentLaravelBackup\Pages;
 
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Enums\Option;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Jobs\CreateBackupJob;
+use Juniyasyos\FilamentLaravelBackup\Enums\Option;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
+use Juniyasyos\FilamentLaravelBackup\Jobs\CreateBackupJob;
 
 class Backups extends Page
 {
@@ -48,7 +48,7 @@ class Backups extends Page
 
     public function create(string $option = ''): void
     {
-        /** @var FilamentSpatieLaravelBackupPlugin $plugin */
+        /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
         CreateBackupJob::dispatch(Option::from($option), $plugin->getTimeout())
@@ -65,7 +65,7 @@ class Backups extends Page
 
     public function shouldDisplayStatusListRecords(): bool
     {
-        /** @var FilamentSpatieLaravelBackupPlugin $plugin */
+        /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
         return $plugin->hasStatusListRecordsTable();
@@ -73,6 +73,6 @@ class Backups extends Page
 
     public static function canAccess(): bool
     {
-        return FilamentSpatieLaravelBackupPlugin::get()->isAuthorized();
+        return FilamentLaravelBackupPlugin::get()->isAuthorized();
     }
 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Models;
+namespace Juniyasyos\FilamentLaravelBackup\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackup;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackup;
 use Sushi\Sushi;
 
 class BackupDestinationStatus extends Model
@@ -12,6 +12,6 @@ class BackupDestinationStatus extends Model
 
     public function getRows(): array
     {
-        return FilamentSpatieLaravelBackup::getBackupDestinationStatusData();
+        return FilamentLaravelBackup::getBackupDestinationStatusData();
     }
 }

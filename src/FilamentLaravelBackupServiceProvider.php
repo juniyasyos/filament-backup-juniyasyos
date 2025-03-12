@@ -1,14 +1,14 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup;
+namespace Juniyasyos\FilamentLaravelBackup;
 
 use Livewire\Livewire;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Components\BackupDestinationListRecords;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Components\BackupDestinationStatusListRecords;
+use Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationListRecords;
+use Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationStatusListRecords;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class FilamentSpatieLaravelBackupServiceProvider extends PackageServiceProvider
+class FilamentLaravelBackupServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {

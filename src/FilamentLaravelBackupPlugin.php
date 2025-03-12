@@ -1,13 +1,13 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup;
+namespace Juniyasyos\FilamentLaravelBackup;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Support\Concerns\EvaluatesClosures;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Pages\Backups;
+use Juniyasyos\FilamentLaravelBackup\Pages\Backups;
 
-class FilamentSpatieLaravelBackupPlugin implements Plugin
+class FilamentLaravelBackupPlugin implements Plugin
 {
     use EvaluatesClosures;
 

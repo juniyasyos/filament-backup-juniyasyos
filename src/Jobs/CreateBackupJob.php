@@ -1,13 +1,13 @@
 <?php
 
-namespace ShuvroRoy\FilamentSpatieLaravelBackup\Jobs;
+namespace Juniyasyos\FilamentLaravelBackup\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Artisan;
-use ShuvroRoy\FilamentSpatieLaravelBackup\Enums\Option;
+use Juniyasyos\FilamentLaravelBackup\Enums\Option;
 use Spatie\Backup\Commands\BackupCommand;
 
 class CreateBackupJob implements ShouldQueue
