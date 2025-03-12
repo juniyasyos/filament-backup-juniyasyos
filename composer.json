@@ -11,13 +11,11 @@
     "authors": [
         {
             "name": "Shuvro Roy",
-            "email": "shuvro.nsu.cse@gmail.com",
-            "role": "Developer"
+            "email": "shuvro.nsu.cse@gmail.com"
         },
         {
             "name": "Ahmad Ilyas",
-            "email": "ahmadilyasdahlan@gmail.com",
-            "role": "Developer"
+            "email": "ahmadilyasdahlan@gmail.com"
         }
     ],
     "require": {
