@@ -10,6 +10,11 @@
     "license": "MIT",
     "authors": [
         {
+            "name": "Shuvro Roy",
+            "email": "shuvro.nsu.cse@gmail.com",
+            "role": "Developer"
+        },
+        {
             "name": "Ahmad Ilyas",
             "email": "ahmadilyasdahlan@gmail.com",
             "role": "Developer"
