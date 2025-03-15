@@ -3,20 +3,22 @@
 namespace Juniyasyos\FilamentLaravelBackup\Pages;
 
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Notifications\Notification;
 use Illuminate\Contracts\Support\Htmlable;
 use Juniyasyos\FilamentLaravelBackup\Enums\Option;
-use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
+use Juniyasyos\FilamentSettingsHub\Traits\UseShield;
 use Juniyasyos\FilamentLaravelBackup\Jobs\CreateBackupJob;
+use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class Backups extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down ';
+    use UseShield;
+    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down';
 
     protected static string $view = 'filament-spatie-backup::pages.backups';
 
-    public function getHeading(): string | Htmlable
+    public function getHeading(): string|Htmlable
     {
         return __('filament-spatie-backup::backup.pages.backups.heading');
     }
@@ -69,10 +71,5 @@ class Backups extends Page
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
         return $plugin->hasStatusListRecordsTable();
-    }
-
-    public static function canAccess(): bool
-    {
-        return FilamentLaravelBackupPlugin::get()->isAuthorized();
     }
 }
