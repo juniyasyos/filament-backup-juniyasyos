@@ -3,19 +3,23 @@
 namespace Juniyasyos\FilamentLaravelBackup\Pages;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Auth;
 use Juniyasyos\FilamentLaravelBackup\Enums\Option;
-use Juniyasyos\FilamentSettingsHub\Traits\UseShield;
 use Juniyasyos\FilamentLaravelBackup\Jobs\CreateBackupJob;
 use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
+use Juniyasyos\FilamentSettingsHub\Traits\UseShield;
 
 class Backups extends Page
 {
     use UseShield;
-    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down';
 
+    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down';
     protected static string $view = 'filament-spatie-backup::pages.backups';
 
     public function getHeading(): string|Htmlable
@@ -37,15 +41,27 @@ class Backups extends Page
     {
         return [
             Action::make('Create Backup')
-                ->button()
-                ->label(__('filament-spatie-backup::backup.pages.backups.actions.create_backup'))
-                ->action('openOptionModal'),
+                ->label('Create Backup')
+                ->form([
+                    ToggleButtons::make('option')
+                        ->label('Backup Option')
+                        ->inline()
+                        ->options([
+                            '' => 'All (Database + Files)',
+                            'only-db' => 'Only Database',
+                            'only-files' => 'Only Files',
+                        ])
+                        ->default('')
+                        ->required()
+                ])
+                ->action(function (array $data) {
+                    $this->create($data['option']);
+                })
+                ->modalWidth(MaxWidth::FourExtraLarge)
+                ->modalHeading('Pilih Jenis Backup')
+                ->modalSubmitActionLabel('Jalankan Backup')
+                ->requiresConfirmation(),
         ];
-    }
-
-    public function openOptionModal(): void
-    {
-        $this->dispatch('open-modal', id: 'backup-option');
     }
 
     public function create(string $option = ''): void
@@ -53,15 +69,18 @@ class Backups extends Page
         /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
 
-        CreateBackupJob::dispatch(Option::from($option), $plugin->getTimeout())
+        CreateBackupJob::dispatch(
+            Option::from($option),
+            $plugin->getTimeout(),
+            Auth::user()
+        )
             ->onQueue($plugin->getQueue())
             ->afterResponse();
 
-        $this->dispatch('close-modal', id: 'backup-option');
-
         Notification::make()
-            ->title(__('filament-spatie-backup::backup.pages.backups.messages.backup_success'))
-            ->success()
+            ->title('Backup sedang diproses')
+            ->body('Anda akan mendapatkan notifikasi jika backup telah selesai.')
+            ->info()
             ->send();
     }
 

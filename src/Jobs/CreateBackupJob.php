@@ -2,12 +2,14 @@
 
 namespace Juniyasyos\FilamentLaravelBackup\Jobs;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Artisan;
 use Juniyasyos\FilamentLaravelBackup\Enums\Option;
+use Juniyasyos\FilamentLaravelBackup\Notifications\BackupSuccessNotification;
 use Spatie\Backup\Commands\BackupCommand;
 
 class CreateBackupJob implements ShouldQueue
@@ -19,6 +21,7 @@ class CreateBackupJob implements ShouldQueue
     public function __construct(
         protected readonly Option $option = Option::ALL,
         protected readonly ?int $timeout = null,
+        protected readonly ?User $user = null,
     ) {}
 
     public function handle(): void
@@ -33,5 +36,10 @@ class CreateBackupJob implements ShouldQueue
             },
             '--timeout' => $this->timeout,
         ]);
+
+        // Kirim notifikasi ke user jika ada
+        if ($this->user) {
+            $this->user->notify(new BackupSuccessNotification($this->option));
+        }
     }
 }
