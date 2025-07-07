@@ -19,7 +19,7 @@
         }
     ],
     "require": {
-        "php": "^8.3",
+        "php": "^8.2",
         "calebporzio/sushi": "^2.4",
         "filament/filament": "^3.0",
         "spatie/laravel-backup": "^8.0|^9.0",
