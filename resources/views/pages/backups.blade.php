@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <div class="flex flex-col gap-y-8">
         @if($this->shouldDisplayStatusListRecords())
-            <div class="mb-10">
+            <div style="padding-bottom: 1rem">
                 <livewire:backup-destination-status-list-records />
             </div>
         @endif

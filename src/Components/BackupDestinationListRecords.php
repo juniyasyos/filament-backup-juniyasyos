@@ -2,10 +2,13 @@
 
 namespace Juniyasyos\FilamentLaravelBackup\Components;
 
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Tables;
+use Filament\Actions\Action;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -19,10 +22,11 @@ use Juniyasyos\FilamentLaravelBackup\Models\BackupDestination;
 use Spatie\Backup\BackupDestination\Backup;
 use Spatie\Backup\BackupDestination\BackupDestination as SpatieBackupDestination;
 
-class BackupDestinationListRecords extends Component implements HasForms, HasTable
+class BackupDestinationListRecords extends Component implements HasForms, HasTable, HasActions
 {
     use InteractsWithForms;
     use InteractsWithTable;
+    use InteractsWithActions;
 
     /**
      * @var array<int|string, array<string, string>|string>
@@ -66,12 +70,12 @@ class BackupDestinationListRecords extends Component implements HasForms, HasTab
                     ->options(FilamentLaravelBackup::getFilterDisks()),
             ])
             ->actions([
-                Tables\Actions\Action::make('download')
+                Action::make('download')
                     ->label(__('filament-spatie-backup::backup.components.backup_destination_list.table.actions.download'))
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(fn (BackupDestination $record) => Storage::disk($record->disk)->download($record->path)),
 
-                Tables\Actions\Action::make('delete')
+                Action::make('delete')
                     ->label(__('filament-spatie-backup::backup.components.backup_destination_list.table.actions.delete'))
                     ->icon('heroicon-o-trash')
                     ->requiresConfirmation()

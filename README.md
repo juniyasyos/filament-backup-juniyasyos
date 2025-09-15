@@ -243,6 +243,32 @@ class AdminPanelProvider extends PanelProvider
 
 Please see [UPGRADE](UPGRADE.md) for details on how to upgrade between major versions, including v3 -> v4 changes (Livewire v3 and Blade syntax updates).
 
+## Troubleshooting
+
+If you see an error like:
+
+Livewire page component layout view not found: [components.layouts.app]
+
+This comes from Livewire v3’s default global page layout. Filament pages already provide their own layout, so you should disable Livewire’s default layout (or point it to a valid view in your app):
+
+1) In `config/livewire.php` set the layout to `null`:
+
+```php
+return [
+    // ...
+    'layout' => null,
+];
+```
+
+2) Clear caches:
+
+```bash
+php artisan optimize:clear
+php artisan config:clear
+```
+
+If you also use Livewire Route Page Components elsewhere, set `'layout'` to a real Blade view that exists (for example `'layouts.app'`).
+
 ## Testing
 
 ```bash

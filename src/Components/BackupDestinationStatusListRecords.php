@@ -2,6 +2,8 @@
 
 namespace Juniyasyos\FilamentLaravelBackup\Components;
 
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables;
@@ -14,10 +16,11 @@ use Livewire\Component;
 use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupDestinationStatus;
 
-class BackupDestinationStatusListRecords extends Component implements HasForms, HasTable
+class BackupDestinationStatusListRecords extends Component implements HasForms, HasTable, HasActions
 {
     use InteractsWithForms;
     use InteractsWithTable;
+    use InteractsWithActions;
 
     public function render(): View
     {

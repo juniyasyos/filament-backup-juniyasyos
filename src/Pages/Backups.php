@@ -3,29 +3,29 @@
 namespace Juniyasyos\FilamentLaravelBackup\Pages;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
-use Filament\Support\Enums\MaxWidth;
+use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
 use Juniyasyos\FilamentLaravelBackup\Enums\Option;
 use Juniyasyos\FilamentLaravelBackup\Jobs\CreateBackupJob;
 use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
-use Juniyasyos\FilamentSettingsHub\Traits\UseShield;
+
 
 class Backups extends Page
 {
-    use UseShield;
-
-    protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down';
-
-    protected static string $view = 'filament-spatie-backup::pages.backups';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-cloud-arrow-down';
 
     public function getHeading(): string|Htmlable
     {
         return __('filament-spatie-backup::backup.pages.backups.heading');
+    }
+
+    public function getView(): string
+    {
+        return 'filament-spatie-backup::pages.backups';
     }
 
     public static function getNavigationGroup(): ?string
@@ -48,17 +48,17 @@ class Backups extends Page
                         ->label('Backup Option')
                         ->inline()
                         ->options([
-                            '' => 'All (Database + Files)',
+                            'all' => 'All (Database + Files)',
                             'only-db' => 'Only Database',
                             'only-files' => 'Only Files',
                         ])
-                        ->default('')
+                        ->default('all')
                         ->required()
                 ])
                 ->action(function (array $data) {
-                    $this->create($data['option']);
+                    $this->create($data['option'] ?? 'all');
                 })
-                ->modalWidth(MaxWidth::FourExtraLarge)
+                ->modalWidth(Width::FourExtraLarge)
                 ->modalHeading('Pilih Jenis Backup')
                 ->modalSubmitActionLabel('Jalankan Backup')
                 ->requiresConfirmation(),
@@ -73,7 +73,7 @@ class Backups extends Page
         return $this->getActions();
     }
 
-    public function create(string $option = ''): void
+    public function create(string $option = 'all'): void
     {
         /** @var FilamentLaravelBackupPlugin $plugin */
         $plugin = filament()->getPlugin('filament-spatie-backup');
