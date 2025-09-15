@@ -1,3 +1,3 @@
-<div wire:poll.{{ $this->interval() }}>
+<div wire:poll="{{ $this->interval() }}">
 	{{ $this->table }}
 </div>

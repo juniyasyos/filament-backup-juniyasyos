@@ -20,6 +20,7 @@ class Backups extends Page
     use UseShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-cloud-arrow-down';
+
     protected static string $view = 'filament-spatie-backup::pages.backups';
 
     public function getHeading(): string|Htmlable
@@ -62,6 +63,14 @@ class Backups extends Page
                 ->modalSubmitActionLabel('Jalankan Backup')
                 ->requiresConfirmation(),
         ];
+    }
+
+    /**
+     * Filament v4 uses header actions instead of page actions for the page header.
+     */
+    protected function getHeaderActions(): array
+    {
+        return $this->getActions();
     }
 
     public function create(string $option = ''): void

@@ -48,7 +48,7 @@ class FilamentLaravelBackupPlugin implements Plugin
     public static function get(): static
     {
         /** @var static $instance */
-        $instance = filament(app(static::class)->getId());
+        $instance = filament()->getPlugin((new static())->getId());
 
         return $instance;
     }
@@ -97,6 +97,22 @@ class FilamentLaravelBackupPlugin implements Plugin
     public function getPolingInterval(): string
     {
         return $this->interval;
+    }
+
+    /**
+     * Backward-compatible alias with correct spelling (polling).
+     */
+    public function usingPollingInterval(string $interval): static
+    {
+        return $this->usingPolingInterval($interval);
+    }
+
+    /**
+     * Backward-compatible alias with correct spelling (polling).
+     */
+    public function getPollingInterval(): string
+    {
+        return $this->getPolingInterval();
     }
 
     /**

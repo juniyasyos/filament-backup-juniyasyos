@@ -1,11 +1,11 @@
-# Filament Spatie Laravel Backup
+# Filament Spatie Laravel Backup (Filament v4)
 
 [![PHP Version Require](https://poser.pugx.org/juniyasyos/filament-backup/require/php)](https://packagist.org/packages/juniyasyos/filament-backup)
 [![Latest Stable Version](https://poser.pugx.org/juniyasyos/filament-backup/v)](https://packagist.org/packages/juniyasyos/filament-backup)
 [![Total Downloads](https://poser.pugx.org/juniyasyos/filament-backup/downloads)](https://packagist.org/packages/juniyasyos/filament-backup)
 [![License](https://poser.pugx.org/juniyasyos/filament-backup/license)](https://packagist.org/packages/juniyasyos/filament-backup)
 
-This package provides a Filament page that you can create backup of your application. You'll find installation instructions and full documentation on [spatie/laravel-backup](https://spatie.be/docs/laravel-backup/v7/introduction).
+This package provides a Filament page to create and manage backups of your application. It supports Filament v4 (Livewire v3). You'll find installation instructions and full documentation on [spatie/laravel-backup](https://spatie.be/docs/laravel-backup/v9/introduction).
 
 <img width="1481" alt="Screenshot 2023-08-05 at 2 42 10 PM" src="https://github.com/juniyasyos/filament-backup/assets/21066418/68fe1c0b-a130-41ce-8c7f-e5182d743225">
 
@@ -14,7 +14,7 @@ This package provides a Filament page that you can create backup of your applica
 You can install the package via composer:
 
 ```bash
-composer require Juniyasyos/filament-backup
+composer require juniyasyos/filament-backup
 ```
 
 Publish the package's assets:
@@ -24,7 +24,7 @@ php artisan filament:assets
 ```
 
 You can publish the lang file with:
-`
+
 ```bash
 php artisan vendor:publish --tag="filament-spatie-backup-translations"
 ```
@@ -124,7 +124,7 @@ class AdminPanelProvider extends PanelProvider
             // ...
             ->plugin(
                 FilamentLaravelBackupPlugin::make()
-                    ->usingPolingInterval('10s') // default value is 4s
+            ->usingPollingInterval('10s') // default value is 4s
             );
     }
 }
@@ -241,7 +241,7 @@ class AdminPanelProvider extends PanelProvider
 
 ## Upgrading
 
-Please see [UPGRADE](UPGRADE.md) for details on how to upgrade 1.X to 2.0.
+Please see [UPGRADE](UPGRADE.md) for details on how to upgrade between major versions, including v3 -> v4 changes (Livewire v3 and Blade syntax updates).
 
 ## Testing
 

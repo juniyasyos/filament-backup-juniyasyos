@@ -1,16 +1,16 @@
-# Filament Spatie Laravel Backup Plugin
+# Upgrade to Filament v4
 
-Plugin ini menyediakan integrasi **Spatie Laravel Backup** dengan **Filament v3**, memungkinkan Anda untuk mengelola backup langsung dari panel Filament.
+Plugin ini sekarang mendukung **Filament v4** (menggunakan **Livewire v3**). Dokumen ini merangkum perubahan yang perlu Anda lakukan saat meng-upgrade dari v3.
 
-## 📦 Instalasi
+## 📦 Instalasi (v4)
 
 Jalankan perintah berikut untuk menginstal paket ini:
 
 ```sh
-composer require juniyasyos/filament-spatie-laravel-backup
+composer require juniyasyos/filament-backup
 ```
 
-Setelah itu, daftarkan plugin di dalam **PanelProvider** Anda:
+Daftarkan plugin di dalam **PanelProvider** Anda:
 
 ```php
 <?php
@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
 }
 ```
 
-Kemudian, publikasikan aset plugin:
+Kemudian, publikasikan aset plugin (opsional jika Anda menggunakan tema kustom):
 
 ```sh
 php artisan filament:assets
@@ -39,7 +39,7 @@ php artisan filament:assets
 
 ---
 
-## ⚙️ Konfigurasi
+## ⚙️ Konfigurasi (perubahan API kecil)
 
 Anda dapat mengatur berbagai opsi plugin menggunakan method chaining pada objek plugin:
 
@@ -63,9 +63,7 @@ class AdminPanelProvider extends PanelProvider
                     ->usingPage(Backups::class) // Gunakan halaman kustom untuk backup
                     ->usingQueue('backup-queue') // Tentukan queue untuk proses backup
                     ->usingPollingInterval('10s') // Interval polling (default: 4s)
-                    ->statusListRecordsTable(false) // Sembunyikan tabel status backup (default: true)
-                    ->showBackupSize(true) // Tampilkan ukuran backup
-                    ->allowManualBackup(true) // Izinkan backup manual
+            ->statusListRecordsTable(false) // Sembunyikan tabel status backup (default: true)
             );
     }
 }
@@ -75,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
 
 ## 🚀 Fitur
 
-✅ **Integrasi penuh dengan Filament v3**  
+✅ **Integrasi penuh dengan Filament v4**  
 ✅ **Dukungan antrian (Queue) untuk backup**  
 ✅ **Konfigurasi polling interval**  
 ✅ **Tabel status backup yang dapat disembunyikan**  
