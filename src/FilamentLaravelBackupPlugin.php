@@ -6,6 +6,7 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Support\Concerns\EvaluatesClosures;
 use Juniyasyos\FilamentLaravelBackup\Pages\Backups;
+use Juniyasyos\FilamentLaravelBackup\Pages\BackupSettings;
 
 class FilamentLaravelBackupPlugin implements Plugin
 {
@@ -14,6 +15,8 @@ class FilamentLaravelBackupPlugin implements Plugin
     protected bool | \Closure $authorizeUsing = true;
 
     protected string $page = Backups::class;
+
+    protected ?string $settingsPage = BackupSettings::class;
 
     protected ?string $queue = null;
 
@@ -25,7 +28,13 @@ class FilamentLaravelBackupPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $panel->pages([$this->getPage()]);
+        $pages = [$this->getPage()];
+
+        if ($settingsPage = $this->getSettingsPage()) {
+            $pages[] = $settingsPage;
+        }
+
+        $panel->pages($pages);
     }
 
     public function boot(Panel $panel): void
@@ -73,6 +82,18 @@ class FilamentLaravelBackupPlugin implements Plugin
     public function getPage(): string
     {
         return $this->page;
+    }
+
+    public function usingSettingsPage(?string $page): static
+    {
+        $this->settingsPage = $page;
+
+        return $this;
+    }
+
+    public function getSettingsPage(): ?string
+    {
+        return $this->settingsPage;
     }
 
     public function usingQueue(string $queue): static
