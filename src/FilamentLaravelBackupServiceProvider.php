@@ -3,6 +3,7 @@
 namespace Juniyasyos\FilamentLaravelBackup;
 
 use Livewire\Livewire;
+use Juniyasyos\FilamentLaravelBackup\Commands\BackupSetupCommand;
 use Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationListRecords;
 use Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationStatusListRecords;
 use Spatie\LaravelPackageTools\Package;
@@ -15,7 +16,12 @@ class FilamentLaravelBackupServiceProvider extends PackageServiceProvider
         $package
             ->name('filament-spatie-backup')
             ->hasTranslations()
-            ->hasViews();
+            ->hasViews()
+            ->hasMigration('create_filament_backup_runs_table')
+            ->hasMigration('create_filament_backup_settings_table')
+            ->hasCommands([
+                BackupSetupCommand::class,
+            ]);
     }
 
     public function packageBooted(): void

@@ -62,6 +62,8 @@ class Backups extends Page
                 ->modalHeading('Pilih Jenis Backup')
                 ->modalSubmitActionLabel('Jalankan Backup')
                 ->requiresConfirmation(),
+            Action::make('Pages test')
+                ->label('Pages test')
         ];
     }
 
