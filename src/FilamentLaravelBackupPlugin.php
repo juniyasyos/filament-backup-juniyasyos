@@ -6,6 +6,7 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Support\Concerns\EvaluatesClosures;
 use Juniyasyos\FilamentLaravelBackup\Pages\Backups;
+use Juniyasyos\FilamentLaravelBackup\Pages\BackupSettings;
 
 class FilamentLaravelBackupPlugin implements Plugin
 {
@@ -23,9 +24,17 @@ class FilamentLaravelBackupPlugin implements Plugin
 
     protected ?int $timeout = null;
 
+    protected bool $includeSettingsPage = true;
+
     public function register(Panel $panel): void
     {
-        $panel->pages([$this->getPage()]);
+        $pages = [$this->getPage()];
+
+        if ($this->includeSettingsPage) {
+            $pages[] = BackupSettings::class;
+        }
+
+        $panel->pages($pages);
     }
 
     public function boot(Panel $panel): void
@@ -75,6 +84,20 @@ class FilamentLaravelBackupPlugin implements Plugin
         return $this->page;
     }
 
+    public function withoutSettingsPage(): static
+    {
+        $this->includeSettingsPage = false;
+
+        return $this;
+    }
+
+    public function withSettingsPage(): static
+    {
+        $this->includeSettingsPage = true;
+
+        return $this;
+    }
+
     public function usingQueue(string $queue): static
     {
         $this->queue = $queue;
@@ -99,26 +122,11 @@ class FilamentLaravelBackupPlugin implements Plugin
         return $this->interval;
     }
 
-    /**
-     * Set the timeout (in seconds) used for the backup job. If set to 0, the job will never timeout.
-     *
-     * @see https://www.php.net/manual/en/function.set-time-limit.php
-     */
-    public function timeout(int $seconds): static
+    public function usingTimeout(int $timeout): static
     {
-        $this->timeout = $seconds;
+        $this->timeout = $timeout;
 
         return $this;
-    }
-
-    /**
-     * Make it so that the backup job will never timeout.
-     *
-     * @see https://www.php.net/manual/en/function.set-time-limit.php
-     */
-    public function noTimeout(): static
-    {
-        return $this->timeout(0);
     }
 
     public function getTimeout(): ?int
@@ -126,9 +134,16 @@ class FilamentLaravelBackupPlugin implements Plugin
         return $this->timeout;
     }
 
-    public function statusListRecordsTable(bool $condition = true): static
+    public function withStatusListRecordsTable(): static
     {
-        $this->hasStatusListRecordsTable = $condition;
+        $this->hasStatusListRecordsTable = true;
+
+        return $this;
+    }
+
+    public function withoutStatusListRecordsTable(): static
+    {
+        $this->hasStatusListRecordsTable = false;
 
         return $this;
     }

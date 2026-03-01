@@ -43,7 +43,7 @@ return [
                 'create_backup' => 'Buat Cadangan',
             ],
 
-            'heading' => 'Cadangan',
+            'heading' => 'Manajemen Cadangan Database',
 
             'messages' => [
                 'backup_success' => 'Membuat cadangan baru di latar belakang.',
