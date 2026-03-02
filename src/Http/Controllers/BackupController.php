@@ -112,33 +112,19 @@ class BackupController extends Controller
         $path = $backupJob->path;
 
         try {
-            if (!Storage::disk($disk)->exists($path)) {
+            // Gunakan absolute path langsung untuk menghindari masalah konfigurasi disk
+            $absolutePath = storage_path('app/' . $path);
+            $filename = $backupJob->filename ?? basename($path);
+
+            if (!file_exists($absolutePath)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Backup file not found.',
                 ], 404);
             }
 
-            $filename = $backupJob->filename ?? basename($path);
-            $mimeType = 'application/zip';
-
-            // For local-like disks, we can stream the file directly
-            if (in_array($disk, ['local', 'backup'])) {
-                $fullPath = Storage::disk($disk)->path($path);
-
-                return response()->download($fullPath, $filename, [
-                    'Content-Type' => $mimeType,
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                ]);
-            }
-
-            // For cloud storage, get the content and stream it
-            $content = Storage::disk($disk)->get($path);
-
-            return response($content, 200, [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Content-Length' => strlen($content),
+            return response()->download($absolutePath, $filename, [
+                'Content-Type' => 'application/zip',
             ]);
         } catch (\Exception $e) {
             return response()->json([

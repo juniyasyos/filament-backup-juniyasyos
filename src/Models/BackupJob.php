@@ -399,6 +399,8 @@ class BackupJob extends Model
         }
 
         $this->update(['steps' => $steps]);
+        // Update the in-memory property so subsequent reads reflect the changes
+        $this->steps = $steps;
         return $this;
     }
 

@@ -4,8 +4,6 @@ namespace Juniyasyos\FilamentLaravelBackup\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
-use Illuminate\Notifications\Messages\MailMessage;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 
 class BackupProgressNotification extends Notification
@@ -18,7 +16,7 @@ class BackupProgressNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database'];
     }
 
     public function toDatabase($notifiable): array
@@ -40,24 +38,7 @@ class BackupProgressNotification extends Notification
         ];
     }
 
-    public function toBroadcast($notifiable): array
-    {
-        return $this->toDatabase($notifiable);
-    }
 
-    public function toMail($notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->subject($this->getTitle())
-            ->greeting("Hello {$notifiable->name},")
-            ->line($this->getMessage())
-            ->line("Progress: {$this->backupJob->progress_percentage}%")
-            ->when($this->backupJob->current_step, function ($message) {
-                return $message->line("Current Step: {$this->backupJob->current_step}");
-            })
-            ->line('You will be notified when the backup is completed.')
-            ->action('View Backup Status', url('/admin/backups'));
-    }
 
     protected function getTitle(): string
     {

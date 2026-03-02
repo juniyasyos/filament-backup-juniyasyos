@@ -4,8 +4,6 @@ namespace Juniyasyos\FilamentLaravelBackup\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
-use Illuminate\Notifications\Messages\MailMessage;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 
 class BackupFailedNotification extends Notification
@@ -19,7 +17,7 @@ class BackupFailedNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     public function toDatabase($notifiable): array
@@ -46,37 +44,7 @@ class BackupFailedNotification extends Notification
         ];
     }
 
-    public function toMail($notifiable): MailMessage
-    {
-        $mail = (new MailMessage)
-            ->error()
-            ->subject($this->getTitle())
-            ->greeting("Hello {$notifiable->name},")
-            ->line($this->getMessage())
-            ->line("**Error Details:**")
-            ->line("- Job: {$this->backupJob->name}")
-            ->line("- Type: " . ucfirst(str_replace('_', ' ', $this->backupJob->type)))
-            ->line("- Error: {$this->backupJob->error_message}")
-            ->line("- Failed At: " . $this->backupJob->completed_at?->format('Y-m-d H:i:s'));
 
-        if ($this->backupJob->canRetry()) {
-            $next = $this->backupJob->next_retry_at?->format('Y-m-d H:i:s') ?? 'Shortly';
-            $mail->line("- Next Retry: {$next}")
-                ->line("- Retry Attempt: {$this->backupJob->retry_count}/{$this->backupJob->max_retries}");
-        }
-
-        if ($this->exception) {
-            $mail->line("**Technical Details:**")
-                ->line("- Exception: " . get_class($this->exception))
-                ->line("- File: {$this->exception->getFile()}:{$this->exception->getLine()}");
-        }
-
-        return $mail->action('View Backup Logs', url('/admin/backups'))
-            ->when(!$this->backupJob->canRetry(), function ($message) {
-                return $message->line('Please check your backup configuration and try again.');
-            })
-            ->line('If this problem persists, please contact support.');
-    }
 
     protected function getTitle(): string
     {

@@ -193,31 +193,24 @@ class Backups extends Page implements HasTable
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function (BackupJob $record) {
-                        try {
-                            dd($record->toArray());
-                            return $this->downloadBackup($record);
-                        } catch (\Exception $e) {
-                            Log::error('Failed to download backup', [
-                                'job_id' => $record->id,
-                                'error' => $e->getMessage()
-                            ]);
+                        $absolutePath = storage_path('app/' . $record->path);
+                        $filename = $record->filename ?? basename($record->path);
+                        if (!file_exists($absolutePath)) {
                             Notification::make()
-                                ->title('Download Failed')
-                                ->body('Unable to download backup: ' . $e->getMessage())
+                                ->title('File Tidak Ditemukan')
+                                ->body('File cadangan sudah tidak ada.')
                                 ->danger()
                                 ->send();
+                            return;
                         }
+                        return response()->download($absolutePath, $filename, [
+                            'Content-Type' => 'application/zip',
+                        ]);
                     })
-                    // ->visible(
-                    //     fn(BackupJob $record): bool =>
-                    //     $record->isCompleted() &&
-                    //         $record->disk === 'local' &&
-                    //         $record->path
-                    // )
-                    ->openUrlInNewTab(),
+                    ->visible(fn(BackupJob $record): bool => $record->isCompleted() && !empty($record->path)),
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll('2s') // More frequent polling for better real-time updates
+            ->poll(fn() => BackupJob::active()->exists() ? '3s' : null)
             ->deferLoading()
             ->striped();
     }
@@ -233,11 +226,11 @@ class Backups extends Page implements HasTable
                         ->label('Backup Type')
                         ->inline()
                         ->options([
-                            '' => 'Full Backup (Database + Files)',
+                            'db-files' => 'Full Backup (Database + Files)',
                             'only-db' => 'Database Only',
                             'only-files' => 'Files Only',
                         ])
-                        ->default('')
+                        ->default('db-files')
                         ->required()
                         ->columnSpanFull(),
 
@@ -245,12 +238,6 @@ class Backups extends Page implements HasTable
                         ->label('Custom Filename (Optional)')
                         ->helperText('Leave empty to auto-generate filename')
                         ->placeholder('custom-backup-name.zip')
-                        ->columnSpanFull(),
-
-                    Toggle::make('notifications')
-                        ->label('Send Notifications')
-                        ->helperText('Receive email notifications about backup progress')
-                        ->default(BackupSetting::get('backup.general.notifications_enabled', true))
                         ->columnSpanFull(),
                 ])
                 ->action(function (array $data) {
@@ -274,7 +261,7 @@ class Backups extends Page implements HasTable
         ];
     }
 
-    public function createBackup(string $option = '', ?string $customFilename = null, bool $notifications = false): void
+    public function createBackup(string $option = 'db-files', ?string $customFilename = null, bool $notifications = false): void
     {
         try {
             // Validate storage configuration
@@ -283,8 +270,16 @@ class Backups extends Page implements HasTable
             // Create job record first
             $user = Auth::user();
 
+            // Map 'db-files' ke Option::ALL (value '')
+            $backupOption = match ($option) {
+                'db-files' => Option::ALL,
+                'only-db' => Option::ONLY_DB,
+                'only-files' => Option::ONLY_FILES,
+                default => Option::ALL,
+            };
+
             ImprovedBackupJob::dispatch(
-                Option::from($option),
+                $backupOption,
                 $customFilename,
                 $user?->id,
                 $user ? get_class($user) : null,
@@ -405,46 +400,26 @@ class Backups extends Page implements HasTable
             throw new \Exception('Backup file is not available for download.');
         }
 
-        $disk = Storage::disk($job->disk);
+        // Gunakan path absolut langsung, tidak perlu search kandidat
+        $absolutePath = storage_path('app/' . $job->path);
         $filename = basename($job->path);
 
-        // Cari file di berbagai kemungkinan lokasi
-        $pathsToCheck = array_unique([
-            $job->path,
-            'backups/' . $filename,
-            config('backup.backup.name', 'Laravel') . '/' . $filename,
-            $filename,
-        ]);
-
-        $resolvedPath = null;
-        foreach ($pathsToCheck as $candidate) {
-            if ($disk->exists($candidate)) {
-                $resolvedPath = $candidate;
-                break;
-            }
-        }
-
-        if (!$resolvedPath) {
-            // Update path di database agar sinkron
-            if ($job->path !== null) {
-                $job->update(['path' => null]);
-            }
-
+        if (!file_exists($absolutePath)) {
+            $job->update(['path' => null]);
             Notification::make()
                 ->title('File Tidak Ditemukan')
-                ->body('File cadangan sudah tidak ada di penyimpanan. Silakan buat cadangan baru.')
+                ->body('File cadangan sudah tidak ada. Silakan buat cadangan baru.')
                 ->danger()
-                ->duration(8000)
                 ->send();
-            throw new \Exception('Backup file no longer exists on storage.');
+            throw new \Exception('Backup file no longer exists: ' . $absolutePath);
         }
 
-        // Sinkronkan path jika berbeda dengan yang tersimpan
-        if ($resolvedPath !== $job->path) {
-            $job->update(['path' => $resolvedPath]);
-        }
-
-        return $disk->download($resolvedPath, $filename);
+        return response()->streamDownload(function () use ($absolutePath) {
+            readfile($absolutePath);
+        }, $filename, [
+            'Content-Type' => 'application/zip',
+            'Content-Length' => filesize($absolutePath),
+        ]);
     }
 
     // Real-time polling method for job updates

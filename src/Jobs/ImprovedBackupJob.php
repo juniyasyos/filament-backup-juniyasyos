@@ -13,9 +13,6 @@ use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupSetting;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupLog;
 use Juniyasyos\FilamentLaravelBackup\Services\BackupService;
-use Juniyasyos\FilamentLaravelBackup\Notifications\BackupProgressNotification;
-use Juniyasyos\FilamentLaravelBackup\Notifications\BackupCompletedNotification;
-use Juniyasyos\FilamentLaravelBackup\Notifications\BackupFailedNotification;
 use Spatie\Backup\BackupDestination\BackupDestination;
 use Spatie\Backup\Tasks\Backup\BackupJob as SpatieBackupJob;
 
@@ -148,14 +145,53 @@ class ImprovedBackupJob implements ShouldQueue
         $this->updateProgress(85, 'verification');
         $verifiedPath = $this->verifyBackup($finalPath);
 
+        BackupLog::logDebug("Verified path returned", [
+            'verified_path' => $verifiedPath,
+            'is_null' => $verifiedPath === null,
+            'is_empty' => empty($verifiedPath),
+        ], $this->jobRecord);
+
         // Step 7: Cleanup
         $this->updateProgress(90, 'cleanup');
         $this->cleanupTempFiles($backupPath);
 
         // Step 8: Complete and notify
         $this->updateProgress(95, 'notification');
-        $fileSize = Storage::disk($this->jobRecord->disk)->size($verifiedPath);
+
+        // Retrieve file size from verification step (already obtained there)
+        $fileSize = null;
+        if (isset($this->jobRecord->steps['verification']['file_size'])) {
+            $fileSize = $this->jobRecord->steps['verification']['file_size'];
+        } else {
+            // Fallback: try to get it again with error handling
+            try {
+                $fileSize = Storage::disk($this->jobRecord->disk)->size($verifiedPath);
+            } catch (\Exception $e) {
+                BackupLog::logWarning("Could not retrieve file size on second attempt", [
+                    'path' => $verifiedPath,
+                    'disk' => $this->jobRecord->disk,
+                    'error' => $e->getMessage()
+                ], $this->jobRecord);
+                // File size is optional, don't fail the backup
+                $fileSize = null;
+            }
+        }
+
+        // Also retrieve path from verification step if not available
+        if (empty($verifiedPath) && isset($this->jobRecord->steps['verification']['path'])) {
+            $verifiedPath = $this->jobRecord->steps['verification']['path'];
+            BackupLog::logDebug("Retrieved path from verification steps", [
+                'path' => $verifiedPath
+            ], $this->jobRecord);
+        }
+
         $duration = round(microtime(true) - $startTime, 2);
+
+        BackupLog::logDebug("About to mark as completed", [
+            'verified_path' => $verifiedPath,
+            'file_size' => $fileSize,
+            'duration' => $duration,
+        ], $this->jobRecord);
 
         $this->jobRecord->markAsCompleted($verifiedPath, $fileSize);
 
@@ -397,12 +433,10 @@ class ImprovedBackupJob implements ShouldQueue
                             'size' => $fileSize,
                         ], $this->jobRecord);
 
-                        // Update the job record with the correct path
-                        $this->jobRecord->update(['path' => $foundPath]);
-
                         $this->jobRecord->updateStep('verification', 'completed', [
                             'file_size' => $fileSize,
                             'verified' => true,
+                            'path' => $foundPath,
                         ]);
 
                         BackupLog::logInfo("Backup verification successful", [
@@ -411,6 +445,7 @@ class ImprovedBackupJob implements ShouldQueue
                             'actual_storage_path' => $actualStoragePath,
                         ], $this->jobRecord);
 
+                        // Return path will be saved by markAsCompleted
                         return $foundPath;
                     }
 
@@ -498,9 +533,6 @@ class ImprovedBackupJob implements ShouldQueue
                 throw new \Exception("Backup file is empty: {$foundPath}");
             }
 
-            // Update the job record with the correct path
-            $this->jobRecord->update(['path' => $foundPath]);
-
             // Additional verification for zip files (gunakan foundPath, bukan backupPath)
             if (str_ends_with($foundPath, '.zip')) {
                 $this->verifyZipFile($disk, $foundPath);
@@ -509,6 +541,7 @@ class ImprovedBackupJob implements ShouldQueue
             $this->jobRecord->updateStep('verification', 'completed', [
                 'file_size' => $fileSize,
                 'verified' => true,
+                'path' => $foundPath,
             ]);
 
             BackupLog::logInfo("Backup verification successful", [
@@ -608,13 +641,7 @@ class ImprovedBackupJob implements ShouldQueue
         $this->jobRecord->updateStep('notification', 'processing');
 
         try {
-            if ($this->userId) {
-                $user = $this->getUserModel();
-                if ($user) {
-                    $user->notify(new BackupCompletedNotification($this->jobRecord));
-                }
-            }
-
+            // Notifikasi ditangani oleh Filament, tidak perlu send notification di sini
             $this->jobRecord->updateStep('notification', 'completed');
         } catch (\Exception $e) {
             $this->jobRecord->updateStep('notification', 'failed', [
@@ -644,13 +671,7 @@ class ImprovedBackupJob implements ShouldQueue
             'line' => $exception->getLine(),
         ], $this->jobRecord);
 
-        // Send failure notification
-        if ($this->userId) {
-            $user = $this->getUserModel();
-            if ($user) {
-                $user->notify(new BackupFailedNotification($this->jobRecord, $exception));
-            }
-        }
+        // Notifikasi ditangani oleh Filament, tidak perlu send notification di sini
     }
 
     protected function updateProgress(int $percentage, ?string $step = null): void
@@ -659,14 +680,6 @@ class ImprovedBackupJob implements ShouldQueue
 
         // Force refresh the model to ensure changes are persisted and visible to UI
         $this->jobRecord->refresh();
-
-        // Send progress notification for significant milestones
-        if ($percentage % 25 === 0 && $this->userId) {
-            $user = $this->getUserModel();
-            if ($user) {
-                $user->notify(new BackupProgressNotification($this->jobRecord));
-            }
-        }
     }
 
     protected function generateJobName(): string

@@ -4,8 +4,6 @@ namespace Juniyasyos\FilamentLaravelBackup\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
-use Illuminate\Notifications\Messages\MailMessage;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 
 class BackupCompletedNotification extends Notification
@@ -18,7 +16,7 @@ class BackupCompletedNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     public function toDatabase($notifiable): array
@@ -44,25 +42,7 @@ class BackupCompletedNotification extends Notification
         ];
     }
 
-    public function toMail($notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->success()
-            ->subject($this->getTitle())
-            ->greeting("Hello {$notifiable->name},")
-            ->line($this->getMessage())
-            ->line("**Backup Details:**")
-            ->line("- Type: " . ucfirst(str_replace('_', ' ', $this->backupJob->type)))
-            ->line("- File Size: {$this->backupJob->formatted_file_size}")
-            ->line("- Duration: {$this->backupJob->formatted_duration}")
-            ->line("- Storage: " . ucfirst($this->backupJob->disk))
-            ->when($this->backupJob->path, function ($message) {
-                return $message->line("- File: {$this->backupJob->path}");
-            })
-            ->line('The backup file has been safely stored and is ready for use.')
-            ->action('View Backup Details', url('/admin/backups'))
-            ->line('Thank you for using our backup service!');
-    }
+
 
     protected function getTitle(): string
     {
