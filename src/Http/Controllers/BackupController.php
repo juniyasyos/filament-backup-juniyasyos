@@ -112,18 +112,33 @@ class BackupController extends Controller
         $path = $backupJob->path;
 
         try {
-            // Gunakan absolute path langsung untuk menghindari masalah konfigurasi disk
-            $absolutePath = storage_path('app/' . $path);
             $filename = $backupJob->filename ?? basename($path);
 
-            if (!file_exists($absolutePath)) {
+            // Prefer stream from storage disk for compatibility with local and cloud disks
+            if (!\Illuminate\Support\Facades\Storage::disk($disk)->exists($path)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Backup file not found.',
+                    'message' => 'Backup file not found on configured disk.',
                 ], 404);
             }
 
-            return response()->download($absolutePath, $filename, [
+            $stream = \Illuminate\Support\Facades\Storage::disk($disk)->readStream($path);
+
+            if ($stream === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to open backup stream.',
+                ], 500);
+            }
+
+            return response()->streamDownload(function () use ($stream) {
+                while (!feof($stream)) {
+                    echo fread($stream, 1024 * 8);
+                }
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }, $filename, [
                 'Content-Type' => 'application/zip',
             ]);
         } catch (\Exception $e) {

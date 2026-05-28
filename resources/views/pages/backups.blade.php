@@ -1,143 +1,98 @@
 <x-filament-panels::page>
-    <div class="flex flex-col gap-y-8">
-        {{-- Statistics Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-o-clock class="w-8 h-8 text-yellow-400" />
+    <div class="space-y-6">
+        <x-filament::section>
+            <x-slot name="heading">
+                Ringkasan
+            </x-slot>
+
+            <x-slot name="description">
+                Status singkat backup saat ini.
+            </x-slot>
+
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Aktif</p>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $this->getActiveJobsCount() }}</p>
+                        </div>
+                        <x-heroicon-o-clock class="h-5 w-5 text-yellow-500" />
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tugas Aktif</p>
-                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                            {{ $this->getActiveJobsCount() }}
-                        </p>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Berhasil</p>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $this->getCompletedJobsCount() }}</p>
+                        </div>
+                        <x-heroicon-o-check-circle class="h-5 w-5 text-green-500" />
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Gagal</p>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $this->getFailedJobsCount() }}</p>
+                        </div>
+                        <x-heroicon-o-x-circle class="h-5 w-5 text-red-500" />
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Disk</p>
+                            <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                                {{ ucfirst(\Juniyasyos\FilamentLaravelBackup\Models\BackupSetting::get('backup.storage.default_disk', 'local')) }}
+                            </p>
+                        </div>
+                        <x-heroicon-o-server-stack class="h-5 w-5 text-blue-500" />
                     </div>
                 </div>
             </div>
+        </x-filament::section>
 
-            <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-o-check-circle class="w-8 h-8 text-green-400" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Berhasil</p>
-                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                            {{ $this->getCompletedJobsCount() }}
-                        </p>
-                    </div>
-                </div>
+        <x-filament::section>
+            <x-slot name="heading">
+                Tugas Cadangan
+            </x-slot>
+
+            <x-slot name="description">
+                Pantau dan kelola tugas cadangan Anda dengan pelacakan kemajuan real-time.
+            </x-slot>
+
+            <div class="mb-4 flex flex-wrap items-center justify-end gap-3">
+                <button
+                    wire:click="openResetAllModal"
+                    class="inline-flex items-center px-4 py-2 border border-red-200 dark:border-red-700 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 mr-2" />
+                    Reset Semua
+                </button>
+
+                <button
+                    wire:click="openCleanupModal"
+                    class="inline-flex items-center px-4 py-2 border border-amber-200 dark:border-amber-700 shadow-sm text-sm leading-4 font-medium rounded-md text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200">
+                    <x-heroicon-o-trash class="w-4 h-4 mr-2" />
+                    Pembersihan
+                </button>
             </div>
 
-            <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-o-x-circle class="w-8 h-8 text-red-400" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Gagal</p>
-                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                            {{ $this->getFailedJobsCount() }}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {{ $this->table }}
+        </x-filament::section>
 
-            <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-o-server-stack class="w-8 h-8 text-blue-400" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Penyimpanan</p>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                            {{ ucfirst(\Juniyasyos\FilamentLaravelBackup\Models\BackupSetting::get('backup.storage.default_disk', 'local')) }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <x-filament::section>
+            <x-slot name="heading">
+                File Cadangan yang Ada
+            </x-slot>
 
-        {{-- Backup Jobs Table --}}
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                            Tugas Cadangan
-                        </h3>
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            Pantau dan kelola tugas cadangan Anda dengan pelacakan kemajuan real-time.
-                        </p>
-                    </div>
+            <x-slot name="description">
+                Dibuka hanya jika perlu melihat file backup manual atau sumber lain.
+            </x-slot>
 
-                    <div class="flex items-center space-x-3">
-                        {{-- Reset All Button --}}
-                        <button
-                            wire:click="openResetAllModal"
-                            class="inline-flex items-center px-4 py-2 border border-red-200 dark:border-red-700 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                            <x-heroicon-o-arrow-path class="w-4 h-4 mr-2" />
-                            Reset Semua
-                        </button>
-
-                        {{-- Cleanup Button --}}
-                        <button
-                            wire:click="openCleanupModal"
-                            class="inline-flex items-center px-4 py-2 border border-amber-200 dark:border-amber-700 shadow-sm text-sm leading-4 font-medium rounded-md text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200">
-                            <x-heroicon-o-trash class="w-4 h-4 mr-2" />
-                            Pembersihan
-                        </button>
-
-                        {{-- Refresh Button --}}
-                        <button
-                            wire:click="$refresh"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                            <x-heroicon-o-arrow-path class="w-4 h-4 mr-2" />
-                            Segarkan
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6">
-                {{ $this->table }}
-            </div>
-        </div>
-
-        {{-- Backup Destination Status (if enabled) --}}
-        @if($this->shouldDisplayStatusListRecords())
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                    Status Tujuan Cadangan
-                </h3>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Pantau kesehatan dan status tujuan cadangan Anda.
-                </p>
-            </div>
-
-            <div class="p-6">
-                @livewire(Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationStatusListRecords::class)
-            </div>
-        </div>
-        @endif
-
-        {{-- Existing Backups --}}
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                    File Cadangan yang Ada
-                </h3>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Jelajahi dan kelola file cadangan yang ada dari tujuan penyimpanan Anda.
-                </p>
-            </div>
-
-            <div class="p-6">
-                @livewire(Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationListRecords::class)
-            </div>
-        </div>
+            @livewire(Juniyasyos\FilamentLaravelBackup\Components\BackupDestinationListRecords::class)
+        </x-filament::section>
     </div>
 
     {{-- Cleanup Modal --}}

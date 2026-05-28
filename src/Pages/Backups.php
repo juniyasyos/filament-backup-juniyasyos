@@ -3,6 +3,7 @@
 namespace Juniyasyos\FilamentLaravelBackup\Pages;
 
 use Filament\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\TextInput;
@@ -28,7 +29,6 @@ use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupSetting;
 use Juniyasyos\FilamentLaravelBackup\Pages\BackupSettings;
 use Juniyasyos\FilamentSettingsHub\Traits\UseShield;
-use Juniyasyos\FilamentLaravelBackup\FilamentLaravelBackupPlugin;
 
 class Backups extends Page implements HasTable
 {
@@ -160,57 +160,127 @@ class Backups extends Page implements HasTable
             ])
             ->actions([
                 TableAction::make('view')
-                    ->label('View Details')
+                    ->label('Lihat Detail')
                     ->icon('heroicon-o-eye')
-                    ->modalContent(fn(BackupJob $record) => view('filament-spatie-backup::components.backup-job-details', ['job' => $record->refresh()]))
-                    ->modalHeading(fn(BackupJob $record): string => "Backup Job: {$record->name}")
+                    ->color('gray')
+                    ->modalContent(fn(BackupJob $record) => view(
+                        'filament-spatie-backup::components.backup-job-details',
+                        ['job' => $record->refresh()]
+                    ))
+                    ->modalHeading(fn(BackupJob $record): string => "Detail Backup: {$record->name}")
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
+                    ->modalCancelActionLabel('Tutup')
                     ->extraModalFooterActions([
                         \Filament\Actions\Action::make('refresh')
-                            ->label('Refresh')
+                            ->label('Muat Ulang')
                             ->icon('heroicon-o-arrow-path')
                             ->color('gray')
-                            ->action(fn() => null) // Will be handled by modal refresh
+                            ->action(fn() => null),
                     ]),
 
-                TableAction::make('retry')
-                    ->label('Retry')
-                    ->icon('heroicon-o-arrow-path')
-                    ->action(fn(BackupJob $record) => $this->retryJob($record))
-                    ->visible(fn(BackupJob $record): bool => $record->canRetry())
-                    ->requiresConfirmation(),
+                ActionGroup::make([
+                    TableAction::make('retry')
+                        ->label('Jalankan Ulang')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->action(fn(BackupJob $record) => $this->retryJob($record))
+                        ->visible(fn(BackupJob $record): bool => $record->canRetry())
+                        ->requiresConfirmation()
+                        ->modalHeading('Jalankan ulang backup?')
+                        ->modalDescription('Job backup ini akan dijalankan ulang dari awal.')
+                        ->modalSubmitActionLabel('Ya, Jalankan Ulang')
+                        ->modalCancelActionLabel('Batal'),
 
-                TableAction::make('cancel')
-                    ->label('Cancel')
-                    ->icon('heroicon-o-x-mark')
-                    ->action(fn(BackupJob $record) => $this->cancelJob($record))
-                    ->visible(fn(BackupJob $record): bool => $record->isActive())
-                    ->requiresConfirmation()
-                    ->color('danger'),
+                    TableAction::make('cancel')
+                        ->label('Batalkan Proses')
+                        ->icon('heroicon-o-x-mark')
+                        ->color('danger')
+                        ->action(fn(BackupJob $record) => $this->cancelJob($record))
+                        ->visible(fn(BackupJob $record): bool => $record->isActive())
+                        ->requiresConfirmation()
+                        ->modalHeading('Batalkan proses backup?')
+                        ->modalDescription('Job backup yang sedang berjalan akan dihentikan.')
+                        ->modalSubmitActionLabel('Ya, Batalkan')
+                        ->modalCancelActionLabel('Kembali'),
+                ])
+                    ->label('Operasi Job')
+                    ->icon('heroicon-o-command-line')
+                    ->color('gray')
+                    ->button()
+                    ->visible(fn(BackupJob $record): bool => $record->canRetry() || $record->isActive()),
 
-                TableAction::make('download')
-                    ->label('Download')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function (BackupJob $record) {
-                        $absolutePath = storage_path('app/' . $record->path);
-                        $filename = $record->filename ?? basename($record->path);
-                        if (!file_exists($absolutePath)) {
-                            Notification::make()
-                                ->title('File Tidak Ditemukan')
-                                ->body('File cadangan sudah tidak ada.')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-                        return response()->download($absolutePath, $filename, [
-                            'Content-Type' => 'application/zip',
-                        ]);
-                    })
-                    ->visible(fn(BackupJob $record): bool => $record->isCompleted() && !empty($record->path)),
+                ActionGroup::make([
+                    TableAction::make('download')
+                        ->label('Unduh File Backup')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function (BackupJob $record) {
+                            $disk = $record->disk ?? 'local';
+                            $path = $record->path;
+                            $filename = $record->filename ?? basename($path);
+
+                            try {
+                                if (!$path || !Storage::disk($disk)->exists($path)) {
+                                    Notification::make()
+                                        ->title('File Tidak Ditemukan')
+                                        ->body('File backup sudah tidak tersedia atau sudah dipindahkan.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+
+                                $stream = Storage::disk($disk)->readStream($path);
+
+                                if ($stream === false) {
+                                    Notification::make()
+                                        ->title('Gagal Membuka File')
+                                        ->body('File backup tidak dapat dibuka untuk proses unduhan.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+
+                                return response()->streamDownload(function () use ($stream) {
+                                    while (!feof($stream)) {
+                                        echo fread($stream, 1024 * 8);
+                                    }
+
+                                    if (is_resource($stream)) {
+                                        fclose($stream);
+                                    }
+                                }, $filename, [
+                                    'Content-Type' => 'application/zip',
+                                ]);
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Unduhan Gagal')
+                                    ->body('Gagal mengunduh file backup: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn(BackupJob $record): bool => $record->isCompleted() && filled($record->path)),
+
+                    TableAction::make('delete')
+                        ->label('Hapus Riwayat Backup')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus riwayat backup?')
+                        ->modalDescription('Data job backup akan dihapus dari daftar. Pastikan file backup sudah tidak dibutuhkan.')
+                        ->modalSubmitActionLabel('Ya, Hapus')
+                        ->modalCancelActionLabel('Batal')
+                        ->action(fn(BackupJob $record) => $this->deleteJob($record)),
+                ])
+                    ->label('File Backup')
+                    ->icon('heroicon-o-archive-box')
+                    ->color('gray')
+                    ->button(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll(fn() => BackupJob::active()->exists() ? '3s' : null)
+            ->poll('30s')
             ->deferLoading()
             ->striped();
     }
@@ -366,14 +436,6 @@ class Backups extends Page implements HasTable
         }
     }
 
-    public function shouldDisplayStatusListRecords(): bool
-    {
-        /** @var FilamentLaravelBackupPlugin $plugin */
-        $plugin = filament()->getPlugin('filament-spatie-backup');
-
-        return $plugin->hasStatusListRecordsTable();
-    }
-
     public function getActiveJobsCount(): int
     {
         return BackupJob::active()->count();
@@ -436,7 +498,7 @@ class Backups extends Page implements HasTable
     public function refresh(): void
     {
         // This method allows JavaScript to refresh the component
-        // The table will auto-refresh due to the poll('5s') configuration
+        // The table will auto-refresh every 30s due to the poll('30s') configuration
     }
 
     public function openCleanupModal(): void
@@ -562,6 +624,38 @@ class Backups extends Page implements HasTable
             Notification::make()
                 ->title('❌ Pembersihan Gagal')
                 ->body('Gagal membersihkan tugas: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function deleteJob(BackupJob $job): void
+    {
+        try {
+            if ($job->path) {
+                try {
+                    Storage::disk($job->disk)->delete($job->path);
+                } catch (\Exception $e) {
+                    // log and continue deleting record
+                    Log::warning('Failed to delete backup file for job', [
+                        'job_id' => $job->id,
+                        'path' => $job->path,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $job->delete();
+
+            Notification::make()
+                ->title('Deleted')
+                ->body("Backup job '{$job->name}' has been deleted.")
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Delete Failed')
+                ->body('Failed to delete backup job: ' . $e->getMessage())
                 ->danger()
                 ->send();
         }

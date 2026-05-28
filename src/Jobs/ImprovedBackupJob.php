@@ -13,6 +13,7 @@ use Juniyasyos\FilamentLaravelBackup\Models\BackupJob;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupSetting;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupLog;
 use Juniyasyos\FilamentLaravelBackup\Services\BackupService;
+use Juniyasyos\FilamentLaravelBackup\Services\BackupManager;
 use Spatie\Backup\BackupDestination\BackupDestination;
 use Spatie\Backup\Tasks\Backup\BackupJob as SpatieBackupJob;
 
@@ -36,20 +37,28 @@ class ImprovedBackupJob implements ShouldQueue
         'uploading' => 'Uploading to storage destination',
         'verification' => 'Verifying backup integrity',
         'cleanup' => 'Cleaning up temporary files',
-        'notification' => 'Sending completion notification'
+        'notification' => 'Sending completion notification',
     ];
 
-    public function __construct(
-        protected readonly Option $option = Option::ALL,
-        protected readonly ?string $customFilename = null,
-        protected readonly ?int $userId = null,
-        protected readonly ?string $userType = null,
-        protected readonly array $additionalOptions = []
-    ) {
+    protected ?BackupManager $backupManager = null;
+    protected Option $option;
+    protected ?string $customFilename = null;
+    protected ?int $userId = null;
+    protected ?string $userType = null;
+    protected array $additionalOptions = [];
+
+    public function __construct(Option $option = Option::ALL, ?string $customFilename = null, ?int $userId = null, ?string $userType = null, array $additionalOptions = [])
+    {
+        $this->option = $option;
+        $this->customFilename = $customFilename;
+        $this->userId = $userId;
+        $this->userType = $userType;
+        $this->additionalOptions = $additionalOptions;
+
         // Set timeout from settings
         $this->timeout = BackupSetting::get('backup.general.timeout', 3600);
 
-        // Set queue from settings  
+        // Set queue from settings
         $queueName = BackupSetting::get('backup.general.queue', 'default');
         $this->onQueue($queueName);
     }
@@ -58,8 +67,9 @@ class ImprovedBackupJob implements ShouldQueue
     {
         $this->backupService = $backupService;
 
-        // Create job record for tracking
-        $this->createJobRecord();
+        // Create job record for tracking via BackupManager (layered responsibility)
+        $this->backupManager = app(BackupManager::class);
+        $this->jobRecord = $this->backupManager->createJobRecord($this->option, $this->customFilename, $this->userId, $this->userType, $this->additionalOptions);
 
         try {
             $this->executeBackup();
@@ -69,47 +79,9 @@ class ImprovedBackupJob implements ShouldQueue
         }
     }
 
-    protected function createJobRecord(): void
-    {
-        $this->jobRecord = BackupJob::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => $this->generateJobName(),
-            'type' => $this->mapOptionToType($this->option),
-            'status' => BackupJob::STATUS_QUEUED,
-            'options' => array_merge([
-                'option' => $this->option->value,
-                'custom_filename' => $this->customFilename,
-            ], $this->additionalOptions),
-            'disk' => BackupSetting::get('backup.storage.default_disk', 'local'),
-            'user_id' => $this->userId,
-            'user_type' => $this->userType,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'queue_name' => $this->queue,
-            'connection' => $this->connection,
-            'job_payload' => [
-                'option' => $this->option->value,
-                'filename' => $this->customFilename,
-                'additional_options' => $this->additionalOptions,
-            ],
-            'max_retries' => $this->tries,
-        ]);
-
-        // Initialize all steps
-        foreach ($this->steps as $stepKey => $stepName) {
-            $this->jobRecord->addStep($stepKey);
-        }
-
-        BackupLog::logInfo("Backup job created", [
-            'job_id' => $this->jobRecord->id,
-            'type' => $this->jobRecord->type,
-            'option' => $this->option->value,
-        ], $this->jobRecord);
-    }
-
     protected function executeBackup(): void
     {
-        $this->jobRecord->markAsProcessing();
+        $this->backupManager->markAsProcessing($this->jobRecord);
         $startTime = microtime(true);
 
         // Step 1: Initialize
@@ -120,20 +92,14 @@ class ImprovedBackupJob implements ShouldQueue
         $this->updateProgress(10, 'validation');
         $this->validateStoragePermissions();
 
-        // Step 3: Create backup based on type
+        // Step 3: Create backup using Spatie's backup command as the single source of truth
+        // Avoid duplicating database/files dump logic to reduce IO and complexity.
         $backupPath = null;
 
-        if ($this->option === Option::ALL || $this->option === Option::ONLY_DB) {
-            $this->updateProgress(20, 'database_backup');
-            $this->createDatabaseBackup();
-        }
+         // Update progress to indicate we are about to run the backup task
+        $this->updateProgress(40, 'database_backup');
 
-        if ($this->option === Option::ALL || $this->option === Option::ONLY_FILES) {
-            $this->updateProgress(40, 'files_backup');
-            $this->createFilesBackup();
-        }
-
-        // Step 4: Create final backup file
+        // Step 4: Create final backup file (Spatie command handles DB/files according to options)
         $this->updateProgress(60, 'compressing');
         $backupPath = $this->createFinalBackup();
 
@@ -175,6 +141,7 @@ class ImprovedBackupJob implements ShouldQueue
                 // File size is optional, don't fail the backup
                 $fileSize = null;
             }
+            // fileSize fallback handled later; continue
         }
 
         // Also retrieve path from verification step if not available
@@ -193,7 +160,7 @@ class ImprovedBackupJob implements ShouldQueue
             'duration' => $duration,
         ], $this->jobRecord);
 
-        $this->jobRecord->markAsCompleted($verifiedPath, $fileSize);
+        $this->backupManager->markAsCompleted($this->jobRecord, $verifiedPath, $fileSize);
 
         // Send completion notification
         $this->sendCompletionNotification();
@@ -662,7 +629,11 @@ class ImprovedBackupJob implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
         ];
 
-        $this->jobRecord->markAsFailed($errorMessage, $errorDetails);
+        if ($this->backupManager) {
+            $this->backupManager->markAsFailed($this->jobRecord, $errorMessage, $errorDetails);
+        } else {
+            $this->jobRecord->markAsFailed($errorMessage, $errorDetails);
+        }
 
         BackupLog::logError("Backup job failed", [
             'error' => $errorMessage,

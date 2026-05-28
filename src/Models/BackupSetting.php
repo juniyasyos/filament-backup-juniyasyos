@@ -165,7 +165,21 @@ class BackupSetting extends Model
         $setting = self::where('key', $key)->first();
 
         if (!$setting) {
-            return false;
+            // Create a minimal setting record if it does not exist yet so saving via UI works
+            try {
+                $setting = self::create([
+                    'key' => $key,
+                    'name' => $key,
+                    'group' => explode('.', $key)[1] ?? 'general',
+                    'type' => is_array($value) ? 'json' : 'string',
+                    'value' => $value,
+                    'is_active' => true,
+                ]);
+                self::clearCache();
+                return (bool) $setting;
+            } catch (\Exception $e) {
+                return false;
+            }
         }
 
         $setting->value = $value;
@@ -304,8 +318,15 @@ class BackupSetting extends Model
             Cache::forget($key);
         }
 
-        // Clear value caches (harder to do efficiently, so we could use tags)
-        Cache::flush(); // More aggressive, but ensures clean state
+        // Clear per-key cached values to avoid flushing entire application cache
+        try {
+            $allKeys = self::pluck('key')->toArray();
+            foreach ($allKeys as $k) {
+                Cache::forget(self::CACHE_PREFIX . '.values.' . md5($k));
+            }
+        } catch (\Exception $e) {
+            // If something goes wrong (e.g. DB not available), avoid throwing during cache clear
+        }
     }
 
     /**

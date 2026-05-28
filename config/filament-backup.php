@@ -31,7 +31,7 @@ return [
         ],
 
         'storage' => [
-            'default_disk' => 'backup',
+            'default_disk' => 'local',
             'local' => [
                 'path' => 'storage/app/backup',
             ],

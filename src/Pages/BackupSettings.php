@@ -11,6 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
@@ -81,14 +82,14 @@ class BackupSettings extends Page
     protected function getGeneralSettingsSchema(): array
     {
         return [
-            Section::make('Backup Configuration')
-                ->description('General backup settings and preferences')
+            Section::make(__('backup.pages.settings.general.section'))
+                ->description(__('backup.pages.settings.general.description'))
                 ->schema([
                     Grid::make(2)
                         ->schema([
                             TextInput::make('generalSettings.backup.general.timeout')
-                                ->label('Backup Timeout (seconds)')
-                                ->helperText('Maximum time allowed for backup process')
+                                ->label(__('backup.pages.settings.general.timeout_label'))
+                                ->helperText(__('backup.pages.settings.general.timeout_helper'))
                                 ->numeric()
                                 ->minValue(60)
                                 ->maxValue(7200)
@@ -96,8 +97,8 @@ class BackupSettings extends Page
                                 ->required(),
 
                             TextInput::make('generalSettings.backup.general.queue')
-                                ->label('Queue Name')
-                                ->helperText('Queue name for backup jobs')
+                                ->label(__('backup.pages.settings.general.queue_label'))
+                                ->helperText(__('backup.pages.settings.general.queue_helper'))
                                 ->default('default')
                                 ->required(),
                         ]),
@@ -105,13 +106,14 @@ class BackupSettings extends Page
                     Grid::make(2)
                         ->schema([
                             Toggle::make('generalSettings.backup.general.cleanup_enabled')
-                                ->label('Auto Cleanup Enabled')
-                                ->helperText('Automatically cleanup old backups')
+                                ->label(__('backup.pages.settings.general.cleanup_label'))
+                                ->helperText(__('backup.pages.settings.general.cleanup_helper'))
                                 ->default(true),
 
                             TextInput::make('generalSettings.backup.general.cleanup_days')
-                                ->label('Cleanup After Days')
-                                ->helperText('Delete backups older than X days')
+                                ->label(__('backup.pages.settings.general.cleanup_days_label'))
+                                ->helperText(__('backup.pages.settings.general.cleanup_days_helper'))
+                                ->visible(fn ($get) => $get('generalSettings.backup.general.cleanup_enabled'))
                                 ->numeric()
                                 ->minValue(1)
                                 ->maxValue(365)
@@ -120,8 +122,8 @@ class BackupSettings extends Page
                         ]),
 
                     Toggle::make('generalSettings.backup.general.notifications_enabled')
-                        ->label('Email Notifications')
-                        ->helperText('Send email notifications for backup events')
+                        ->label(__('backup.pages.settings.general.notifications_enabled_label'))
+                        ->helperText(__('backup.pages.settings.general.notifications_enabled_helper'))
                         ->default(true),
                 ])
         ];
@@ -130,12 +132,12 @@ class BackupSettings extends Page
     protected function getStorageSettingsSchema(): array
     {
         return [
-            Section::make('Storage Configuration')
-                ->description('Configure where backups are stored')
+            Section::make(__('backup.pages.settings.storage.section'))
+                ->description(__('backup.pages.settings.storage.description'))
                 ->schema([
                     Select::make('storageSettings.backup.storage.default_disk')
-                        ->label('Default Storage Disk')
-                        ->helperText('Primary storage disk for backups')
+                        ->label(__('backup.pages.settings.storage.default_disk_label'))
+                        ->helperText(__('backup.pages.settings.storage.default_disk_helper'))
                         ->options([
                             'local' => 'Local Storage',
                             's3' => 'Amazon S3',
@@ -146,28 +148,30 @@ class BackupSettings extends Page
                         ->reactive(),
                 ]),
 
-            Section::make('Local Storage')
-                ->description('Local file system storage configuration')
+            Section::make(__('backup.pages.settings.storage.local_section'))
+                ->description(__('backup.pages.settings.storage.local_description'))
+                ->visible(fn ($get) => $get('storageSettings.backup.storage.default_disk') === 'local')
                 ->schema([
                     TextInput::make('storageSettings.backup.storage.local.path')
-                        ->label('Local Storage Path')
-                        ->helperText('Path where backups are stored locally')
+                        ->label(__('backup.pages.settings.storage.local_path_label'))
+                        ->helperText(__('backup.pages.settings.storage.local_path_helper'))
                         ->default('storage/app/backup')
                         ->required(),
                 ]),
 
-            Section::make('Amazon S3 Storage')
-                ->description('Amazon S3 cloud storage configuration')
+            Section::make(__('backup.pages.settings.storage.s3_section'))
+                ->description(__('backup.pages.settings.storage.s3_description'))
+                ->visible(fn ($get) => $get('storageSettings.backup.storage.default_disk') === 's3')
                 ->schema([
                     Grid::make(2)
                         ->schema([
                             TextInput::make('storageSettings.backup.storage.s3.bucket')
-                                ->label('S3 Bucket Name')
-                                ->helperText('Amazon S3 bucket name for backups'),
+                                ->label(__('backup.pages.settings.storage.s3_bucket_label'))
+                                ->helperText(__('backup.pages.settings.storage.s3_bucket_helper')),
 
                             Select::make('storageSettings.backup.storage.s3.region')
-                                ->label('S3 Region')
-                                ->helperText('Amazon S3 region')
+                                ->label(__('backup.pages.settings.storage.s3_region_label'))
+                                ->helperText(__('backup.pages.settings.storage.s3_region_helper'))
                                 ->options([
                                     'us-east-1' => 'US East (N. Virginia)',
                                     'us-east-2' => 'US East (Ohio)',
@@ -186,13 +190,13 @@ class BackupSettings extends Page
                     Grid::make(2)
                         ->schema([
                             TextInput::make('storageSettings.backup.storage.s3.key')
-                                ->label('S3 Access Key')
-                                ->helperText('Amazon S3 Access Key ID')
+                                ->label(__('backup.pages.settings.storage.s3_key_label'))
+                                ->helperText(__('backup.pages.settings.storage.s3_key_helper'))
                                 ->password(),
 
                             TextInput::make('storageSettings.backup.storage.s3.secret')
-                                ->label('S3 Secret Key')
-                                ->helperText('Amazon S3 Secret Access Key')
+                                ->label(__('backup.pages.settings.storage.s3_secret_label'))
+                                ->helperText(__('backup.pages.settings.storage.s3_secret_helper'))
                                 ->password(),
                         ]),
                 ]),
@@ -202,36 +206,43 @@ class BackupSettings extends Page
     protected function getNotificationSettingsSchema(): array
     {
         return [
-            Section::make('Email Notifications')
-                ->description('Configure email notification settings')
+            Section::make(__('backup.pages.settings.notifications.section'))
+                ->description(__('backup.pages.settings.notifications.description'))
                 ->schema([
                     Toggle::make('notificationSettings.backup.notifications.on_success')
-                        ->label('Notify on Success')
-                        ->helperText('Send notification when backup completes successfully')
+                        ->label(__('backup.pages.settings.notifications.on_success_label'))
+                        ->helperText(__('backup.pages.settings.notifications.on_success_helper'))
                         ->default(true),
 
                     Toggle::make('notificationSettings.backup.notifications.on_failure')
-                        ->label('Notify on Failure')
-                        ->helperText('Send notification when backup fails')
+                        ->label(__('backup.pages.settings.notifications.on_failure_label'))
+                        ->helperText(__('backup.pages.settings.notifications.on_failure_helper'))
                         ->default(true),
 
                     Toggle::make('notificationSettings.backup.notifications.progress_updates')
-                        ->label('Progress Updates')
-                        ->helperText('Send periodic progress updates during backup')
+                        ->label(__('backup.pages.settings.notifications.progress_updates_label'))
+                        ->helperText(__('backup.pages.settings.notifications.progress_updates_helper'))
                         ->default(false),
                 ]),
 
-            Section::make('Recipients')
-                ->description('Configure who receives notifications')
+            Section::make(__('backup.pages.settings.notifications.recipients_section'))
+                ->description(__('backup.pages.settings.notifications.recipients_description'))
                 ->schema([
-                    Textarea::make('notificationSettings.backup.notifications.recipients')
+                    Repeater::make('notificationSettings.backup.notifications.recipients')
                         ->label('Email Recipients')
-                        ->helperText('Enter email addresses, one per line')
-                        ->rows(3),
+                        ->helperText('Add email addresses that will receive notifications')
+                        ->schema([
+                            TextInput::make('email')
+                                ->label(__('backup.pages.settings.notifications.recipient_email_label'))
+                                ->email()
+                                ->required(),
+                        ])
+                        ->minItems(0)
+                        ->columns(1),
 
                     Toggle::make('notificationSettings.backup.notifications.notify_user')
-                        ->label('Notify Backup Creator')
-                        ->helperText('Send notifications to the user who initiated the backup')
+                        ->label(__('backup.pages.settings.notifications.notify_user_label'))
+                        ->helperText(__('backup.pages.settings.notifications.notify_user_helper'))
                         ->default(true),
                 ]),
         ];
@@ -240,31 +251,32 @@ class BackupSettings extends Page
     protected function getSecuritySettingsSchema(): array
     {
         return [
-            Section::make('Access Control')
-                ->description('Security and access control settings')
+            Section::make(__('backup.pages.settings.security.access_section'))
+                ->description(__('backup.pages.settings.security.access_description'))
                 ->schema([
+
                     Toggle::make('securitySettings.backup.security.require_permission')
-                        ->label('Require Permission')
-                        ->helperText('Require specific permission to access backup features')
+                        ->label(__('backup.pages.settings.security.require_permission_label'))
+                        ->helperText(__('backup.pages.settings.security.require_permission_helper'))
                         ->default(true),
 
                     TextInput::make('securitySettings.backup.security.allowed_roles')
-                        ->label('Allowed Roles')
-                        ->helperText('Comma-separated list of roles that can access backups')
+                        ->label(__('backup.pages.settings.security.allowed_roles_label'))
+                        ->helperText(__('backup.pages.settings.security.allowed_roles_helper'))
                         ->placeholder('admin,backup-manager'),
                 ]),
 
-            Section::make('File Security')
-                ->description('File security and encryption settings')
+            Section::make(__('backup.pages.settings.security.file_section'))
+                ->description(__('backup.pages.settings.security.file_description'))
                 ->schema([
                     Toggle::make('securitySettings.backup.security.encrypt_backups')
-                        ->label('Encrypt Backups')
-                        ->helperText('Encrypt backup files for additional security')
+                        ->label(__('backup.pages.settings.security.encrypt_backups_label'))
+                        ->helperText(__('backup.pages.settings.security.encrypt_backups_helper'))
                         ->default(false),
 
                     TextInput::make('securitySettings.backup.security.encryption_key')
-                        ->label('Encryption Key')
-                        ->helperText('Encryption key for backup files (leave empty to auto-generate)')
+                        ->label(__('backup.pages.settings.security.encryption_key_label'))
+                        ->helperText(__('backup.pages.settings.security.encryption_key_helper'))
                         ->password(),
                 ]),
         ];
@@ -305,7 +317,20 @@ class BackupSettings extends Page
 
             // Update settings in database
             foreach ($allSettings as $key => $value) {
-                BackupSetting::set($key, $value);
+                // Convert repeater rows to simple array of emails for storage
+                if ($key === 'backup.notifications.recipients' && is_array($value)) {
+                    $emails = array_map(function ($row) {
+                        if (is_array($row) && isset($row['email'])) {
+                            return $row['email'];
+                        }
+                        return is_string($row) ? $row : '';
+                    }, $value);
+                    // filter out empty values
+                    $emails = array_values(array_filter($emails, fn($e) => !empty($e)));
+                    BackupSetting::set($key, $emails);
+                } else {
+                    BackupSetting::set($key, $value);
+                }
             }
 
             Notification::make()
@@ -396,12 +421,32 @@ class BackupSettings extends Page
             'backup.storage.s3.secret' => BackupSetting::get('backup.storage.s3.secret', ''),
         ];
 
-        // Load notification settings 
+        // Load notification settings
+        $rawRecipients = BackupSetting::get('backup.notifications.recipients', '');
+
+        // Normalize recipients into Repeater rows: [ ['email' => 'a@example.com'], ... ]
+        $recipientsRows = [];
+        if (is_array($rawRecipients)) {
+            foreach ($rawRecipients as $r) {
+                if (is_string($r) && trim($r) !== '') {
+                    $recipientsRows[] = ['email' => $r];
+                }
+            }
+        } elseif (is_string($rawRecipients) && trim($rawRecipients) !== '') {
+            $lines = preg_split('/\r?\n/', $rawRecipients);
+            foreach ($lines as $line) {
+                $email = trim($line);
+                if ($email !== '') {
+                    $recipientsRows[] = ['email' => $email];
+                }
+            }
+        }
+
         $this->notificationSettings = [
             'backup.notifications.on_success' => BackupSetting::get('backup.notifications.on_success', true),
             'backup.notifications.on_failure' => BackupSetting::get('backup.notifications.on_failure', true),
             'backup.notifications.progress_updates' => BackupSetting::get('backup.notifications.progress_updates', false),
-            'backup.notifications.recipients' => BackupSetting::get('backup.notifications.recipients', ''),
+            'backup.notifications.recipients' => $recipientsRows,
             'backup.notifications.notify_user' => BackupSetting::get('backup.notifications.notify_user', true),
         ];
     }
@@ -430,6 +475,22 @@ class BackupSettings extends Page
             foreach ($required as $key) {
                 if (empty($settings[$key])) {
                     throw new \Exception("S3 configuration incomplete: {$key} is required");
+                }
+            }
+        }
+
+        // Validate recipients (if using repeater rows or simple array)
+        if (isset($settings['backup.notifications.recipients']) && is_array($settings['backup.notifications.recipients'])) {
+            foreach ($settings['backup.notifications.recipients'] as $row) {
+                $email = '';
+                if (is_array($row)) {
+                    $email = $row['email'] ?? '';
+                } elseif (is_string($row)) {
+                    $email = $row;
+                }
+
+                if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new \Exception("Invalid recipient email: {$email}");
                 }
             }
         }
