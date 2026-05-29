@@ -333,9 +333,34 @@ class ImprovedBackupJob implements ShouldQueue
             $disk = $this->jobRecord->disk;
 
             if ($disk !== 'local') {
-                // Move from local temp to target storage
-                $result = $this->backupService->moveToStorage($backupPath, $disk, $this->jobRecord);
-                $finalPath = $result['path'];
+                // If Spatie already copied the backup to the target disk, skip moving
+                $filename = basename($backupPath);
+                $backupName = config('backup.backup.name', 'Laravel');
+                $remoteCandidates = [
+                    'backups/' . $filename,
+                    $backupName . '/' . $filename,
+                    $filename,
+                ];
+
+                $foundRemote = null;
+                foreach ($remoteCandidates as $candidate) {
+                    try {
+                        if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($candidate)) {
+                            $foundRemote = $candidate;
+                            break;
+                        }
+                    } catch (\Exception $e) {
+                        // ignore and continue
+                    }
+                }
+
+                if ($foundRemote) {
+                    $finalPath = $foundRemote;
+                } else {
+                    // Move from local temp to target storage
+                    $result = $this->backupService->moveToStorage($backupPath, $disk, $this->jobRecord);
+                    $finalPath = $result['path'];
+                }
             } else {
                 $finalPath = $backupPath;
             }

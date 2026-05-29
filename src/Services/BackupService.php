@@ -256,10 +256,40 @@ class BackupService
                 'target_path' => $targetPath,
             ], $jobRecord);
 
-            // Read source file and upload to target storage
-            $sourceStream = Storage::disk('local')->readStream($sourcePath);
-            if (!$sourceStream) {
+            // Resolve actual source location on local disk by trying common paths
+            $candidates = [
+                $sourcePath,
+                'backup/' . $sourcePath,
+                'backups/' . basename($sourcePath),
+                'backup/' . config('backup.backup.name', 'Laravel') . '/' . basename($sourcePath),
+                config('backup.backup.name', 'Laravel') . '/' . basename($sourcePath),
+                basename($sourcePath),
+            ];
+
+            $found = null;
+            foreach ($candidates as $candidate) {
+                try {
+                    if (Storage::disk('local')->exists($candidate)) {
+                        $found = $candidate;
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    // ignore and continue
+                }
+            }
+
+            if (!$found) {
+                BackupLog::logError("Source file not found among candidates", [
+                    'candidates' => $candidates,
+                    'disk' => 'local',
+                ], $jobRecord);
+
                 throw new \Exception("Cannot read source file: {$sourcePath}");
+            }
+
+            $sourceStream = Storage::disk('local')->readStream($found);
+            if (!$sourceStream) {
+                throw new \Exception("Cannot open read stream for source file: {$found}");
             }
 
             $success = Storage::disk($targetDisk)->writeStream($targetPath, $sourceStream);
@@ -269,7 +299,7 @@ class BackupService
 
             // Verify the upload
             $targetSize = Storage::disk($targetDisk)->size($targetPath);
-            $sourceSize = Storage::disk('local')->size($sourcePath);
+            $sourceSize = Storage::disk('local')->size($found);
 
             if ($targetSize !== $sourceSize) {
                 throw new \Exception("File size mismatch after upload: source={$sourceSize}, target={$targetSize}");
@@ -277,7 +307,8 @@ class BackupService
 
             // Clean up source file (if different from target)
             if ($targetDisk !== 'local') {
-                Storage::disk('local')->delete($sourcePath);
+                // delete the actual found path
+                Storage::disk('local')->delete($found);
             }
 
             $duration = microtime(true) - $startTime;
@@ -323,7 +354,7 @@ class BackupService
                     break;
 
                 case 's3':
-                    $this->validateS3Storage($config, $errors, $warnings);
+                    $this->validateS3Storage($disk, $config, $errors, $warnings);
                     break;
 
                 default:
@@ -369,7 +400,7 @@ class BackupService
         }
     }
 
-    protected function validateS3Storage(array $config, array &$errors, array &$warnings): void
+    protected function validateS3Storage(string $disk, array $config, array &$errors, array &$warnings): void
     {
         $required = ['key', 'secret', 'region', 'bucket'];
 
@@ -384,12 +415,59 @@ class BackupService
         }
 
         try {
-            // Test S3 connection
-            Storage::disk('s3')->put('backup-test.txt', 'test');
-            Storage::disk('s3')->delete('backup-test.txt');
+            // Test S3/MinIO connection using the provided disk
+            Storage::disk($disk)->put('backup-test.txt', 'test');
+            Storage::disk($disk)->delete('backup-test.txt');
         } catch (\Exception $e) {
-            $errors[] = "S3 connection test failed: " . $e->getMessage();
+            $errors[] = "S3/MinIO connection test failed: " . $e->getMessage();
         }
+    }
+
+    /**
+     * Simple CRUD test for any filesystem disk: create/read and optionally delete a small text file.
+     *
+     * @param string $disk The filesystem disk name to test
+     * @param bool $keepFile If true the test file will not be deleted (useful for debugging). Default false.
+     * @return array Results with keys: disk, created, read, deleted (null if skipped), errors
+     */
+    public function testSimpleCrud(string $disk, bool $keepFile = false): array
+    {
+        $testPath = 'filament-backup-test-' . time() . '.txt';
+        $content = 'filament-backup connectivity test ' . now();
+
+        $result = [
+            'disk' => $disk,
+            'created' => false,
+            'read' => false,
+            'deleted' => null,
+            'errors' => [],
+        ];
+
+        try {
+            // Write
+            Storage::disk($disk)->put($testPath, $content);
+            $result['created'] = Storage::disk($disk)->exists($testPath);
+
+            // Read
+            if ($result['created']) {
+                $f = Storage::disk($disk)->get($testPath);
+                $result['read'] = ($f === $content);
+            }
+
+            // Delete unless caller requested to keep the file
+            if ($result['created']) {
+                if ($keepFile) {
+                    $result['deleted'] = null; // indicate deletion was skipped
+                } else {
+                    Storage::disk($disk)->delete($testPath);
+                    $result['deleted'] = !Storage::disk($disk)->exists($testPath);
+                }
+            }
+        } catch (\Exception $e) {
+            $result['errors'][] = $e->getMessage();
+        }
+
+        return $result;
     }
 
     protected function copyDirectoryWithProgress(string $source, string $destination, array $excludes, ?callable $callback): array

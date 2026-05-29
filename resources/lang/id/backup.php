@@ -40,6 +40,12 @@ return [
     'pages' => [
         'settings' => [
             'heading' => 'Pengaturan Cadangan',
+            'navigation_label' => 'Pengaturan',
+
+            'common' => [
+                'yes' => 'Ya',
+                'no' => 'Tidak',
+            ],
 
             'general' => [
                 'section' => 'Konfigurasi Cadangan',
@@ -56,11 +62,34 @@ return [
                 'notifications_enabled_helper' => 'Aktifkan pengiriman notifikasi email untuk event cadangan',
             ],
 
+            'schedule' => [
+                'section' => 'Jadwal Otomatis',
+                'description' => 'Atur seberapa sering backup otomatis harus berjalan',
+                'enabled_label' => 'Aktifkan Backup Otomatis',
+                'enabled_helper' => 'Nyalakan penjadwalan backup otomatis',
+                'interval_value_label' => 'Ulangi Setiap',
+                'interval_value_helper' => 'Contoh: 1, 2, 3, 4',
+                'interval_unit_label' => 'Satuan Waktu',
+                'interval_unit_helper' => 'Pilih detik, menit, jam, hari, atau bulan',
+                'unit_second' => 'Detik',
+                'unit_minute' => 'Menit',
+                'unit_hour' => 'Jam',
+                'unit_day' => 'Hari',
+                'unit_month' => 'Bulan',
+                'hint_label' => 'Petunjuk Format',
+                'hint_helper' => 'Format sederhana. Contoh: setiap 1 hari atau setiap 2 jam',
+                'hint_default' => 'Isi angka saja: 1, 2, 3, 4... lalu pilih satuannya.',
+            ],
+
             'storage' => [
                 'section' => 'Konfigurasi Penyimpanan',
                 'description' => 'Atur tempat penyimpanan cadangan',
                 'default_disk_label' => 'Penyimpanan Default',
                 'default_disk_helper' => 'Penyimpanan utama untuk cadangan',
+                'local_option' => 'Penyimpanan Lokal',
+                's3_option' => 'Amazon S3',
+                'minio_option' => 'MinIO',
+                'gcs_option' => 'Google Cloud Storage',
                 'local_section' => 'Penyimpanan Lokal',
                 'local_description' => 'Konfigurasi penyimpanan pada file system lokal',
                 'local_path_label' => 'Path Penyimpanan Lokal',
@@ -75,6 +104,18 @@ return [
                 's3_key_helper' => 'Access Key ID untuk S3. Untuk keamanan, gunakan environment variable jika memungkinkan',
                 's3_secret_label' => 'S3 Secret Key',
                 's3_secret_helper' => 'Secret key untuk S3. Simpan dengan aman (disarankan di env vars)',
+                'minio_section' => 'Penyimpanan MinIO',
+                'minio_description' => 'Konfigurasi penyimpanan MinIO yang kompatibel dengan S3',
+                'minio_bucket_label' => 'Nama Bucket MinIO',
+                'minio_bucket_helper' => 'Bucket yang digunakan untuk menyimpan cadangan di MinIO',
+                'minio_endpoint_label' => 'Endpoint MinIO',
+                'minio_endpoint_helper' => 'URL endpoint MinIO, misalnya http://127.0.0.1:9000',
+                'minio_key_label' => 'MinIO Username',
+                'minio_key_helper' => 'Username MinIO atau access key (mis. MINIO_ROOT_USER)',
+                'minio_secret_label' => 'MinIO Password',
+                'minio_secret_helper' => 'Password MinIO atau secret key (mis. MINIO_ROOT_PASSWORD)',
+                'minio_path_style_label' => 'Gunakan Path Style Endpoint',
+                'minio_path_style_helper' => 'Aktifkan path-style addressing untuk penyimpanan MinIO/S3-compatible',
                 'gcs_section' => 'Google Cloud',
                 'status' => [
                     'available' => 'Tersedia dan dikonfigurasi',
@@ -87,6 +128,8 @@ return [
                 'save' => 'Simpan Pengaturan',
                 'test_storage' => 'Uji Penyimpanan',
                 'reset' => 'Kembali ke Default',
+                'saving' => 'Menyimpan...',
+                'testing' => 'Menguji...',
             ],
 
             'recent' => [
@@ -106,6 +149,8 @@ return [
                 'progress_updates_helper' => 'Kirim pembaruan progres berkala selama proses cadangan',
                 'recipients_section' => 'Penerima',
                 'recipients_description' => 'Atur siapa yang menerima notifikasi',
+                'recipients_label' => 'Daftar Email Penerima',
+                'recipients_helper' => 'Tambahkan alamat email yang akan menerima notifikasi',
                 'recipient_email_label' => 'Email',
                 'notify_user_label' => 'Beri Tahu Pembuat Cadangan',
                 'notify_user_helper' => 'Kirim notifikasi ke pengguna yang memulai cadangan',

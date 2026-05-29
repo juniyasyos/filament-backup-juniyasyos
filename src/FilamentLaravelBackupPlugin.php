@@ -7,6 +7,7 @@ use Filament\Panel;
 use Filament\Support\Concerns\EvaluatesClosures;
 use Juniyasyos\FilamentLaravelBackup\Pages\Backups;
 use Juniyasyos\FilamentLaravelBackup\Pages\BackupSettings;
+use Juniyasyos\FilamentLaravelBackup\Pages\BackupConfiguration;
 
 class FilamentLaravelBackupPlugin implements Plugin
 {
@@ -32,6 +33,7 @@ class FilamentLaravelBackupPlugin implements Plugin
 
         if ($this->includeSettingsPage) {
             $pages[] = BackupSettings::class;
+            $pages[] = BackupConfiguration::class;
         }
 
         $panel->pages($pages);
