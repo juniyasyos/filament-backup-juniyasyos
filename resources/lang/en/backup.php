@@ -79,6 +79,9 @@ return [
                 'hint_label' => 'Format Hint',
                 'hint_helper' => 'Simple format only. Example: every 1 day or every 2 hours',
                 'hint_default' => 'Use numbers only: 1, 2, 3, 4... then choose the unit.',
+                'preview_label' => 'Preview',
+                'preview_enabled' => 'Backups will run every :value :unit.',
+                'preview_disabled' => 'Schedule is disabled.',
             ],
 
             'storage' => [

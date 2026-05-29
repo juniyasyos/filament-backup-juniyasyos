@@ -11,6 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
@@ -156,6 +157,8 @@ class BackupSettings extends Page
                                 ->numeric()
                                 ->minValue(1)
                                 ->default(1)
+                                ->reactive()
+                                ->placeholder('e.g. 1')
                                 ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
 
                             Select::make('scheduleSettings.backup.schedule.interval_unit')
@@ -169,15 +172,24 @@ class BackupSettings extends Page
                                     'month' => __('backup.pages.settings.schedule.unit_month'),
                                 ])
                                 ->default('day')
+                                ->reactive()
                                 ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
                         ]),
 
-                    TextInput::make('scheduleSettings.backup.schedule.hint')
-                        ->label(__('backup.pages.settings.schedule.hint_label'))
-                        ->helperText(__('backup.pages.settings.schedule.hint_helper'))
-                        ->default(__('backup.pages.settings.schedule.hint_default'))
-                        ->disabled()
-                        ->dehydrated(false)
+                    Placeholder::make('scheduleSettings.backup.schedule.preview')
+                        ->label(__('backup.pages.settings.schedule.preview_label'))
+                        ->content(fn($get) => $get('scheduleSettings.backup.schedule.enabled')
+                            ? __(
+                                'backup.pages.settings.schedule.preview_enabled',
+                                [
+                                    'value' => $get('scheduleSettings.backup.schedule.interval_value') ?? 1,
+                                    'unit' => __(
+                                        'backup.pages.settings.schedule.unit_' . ($get('scheduleSettings.backup.schedule.interval_unit') ?? 'day')
+                                    ),
+                                ]
+                            )
+                            : __('backup.pages.settings.schedule.preview_disabled')
+                        )
                         ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
                 ]),
         ];

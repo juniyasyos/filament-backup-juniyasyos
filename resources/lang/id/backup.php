@@ -79,6 +79,9 @@ return [
                 'hint_label' => 'Petunjuk Format',
                 'hint_helper' => 'Format sederhana. Contoh: setiap 1 hari atau setiap 2 jam',
                 'hint_default' => 'Isi angka saja: 1, 2, 3, 4... lalu pilih satuannya.',
+                'preview_label' => 'Pratinjau',
+                'preview_enabled' => 'Cadangan akan berjalan setiap :value :unit.',
+                'preview_disabled' => 'Jadwal dimatikan.',
             ],
 
             'storage' => [
