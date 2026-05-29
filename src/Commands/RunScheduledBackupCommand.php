@@ -16,32 +16,49 @@ class RunScheduledBackupCommand extends Command
 
     public function handle(): int
     {
-        $configuration = BackupConfiguration::ensureDefaults();
+        logger()->info('backup:run-scheduled command started');
 
+        $configuration = BackupConfiguration::ensureDefaults();
         $force = (bool) $this->option('force');
 
         if (! $configuration->schedule_enabled && ! $force) {
+            logger()->info('backup schedule skipped', [
+                'reason' => 'schedule disabled',
+                'settings' => $configuration->toArray(),
+                'now' => now()->toDateTimeString(),
+            ]);
             $this->info('Scheduled backup is disabled.');
-
             return self::SUCCESS;
         }
 
         $isDue = $configuration->isScheduledBackupDue();
 
         if (! $force && ! $isDue) {
+            logger()->info('backup schedule skipped', [
+                'reason' => 'not due',
+                'settings' => $configuration->toArray(),
+                'now' => now()->toDateTimeString(),
+                'last_run_at' => $configuration->schedule_last_run_at,
+                'interval_value' => $configuration->schedule_interval_value,
+                'interval_unit' => $configuration->schedule_interval_unit,
+            ]);
             $this->info('Scheduled backup is not due yet.');
-
             return self::SUCCESS;
         }
 
-            $job = ImprovedBackupJob::dispatch(
-                $configuration->getScheduleBackupOption(),
+        logger()->info('backup job dispatched from scheduled command', [
+            'settings' => $configuration->toArray(),
+            'now' => now()->toDateTimeString(),
+        ]);
+
+        $job = ImprovedBackupJob::dispatch(
+            $configuration->getScheduleBackupOption(),
             null,
             null,
             null,
             [
                 'initiated_via' => 'scheduler',
-                    'schedule_backup_type' => $configuration->schedule_backup_type,
+                'schedule_backup_type' => $configuration->schedule_backup_type,
                 'schedule_interval_value' => $configuration->schedule_interval_value,
                 'schedule_interval_unit' => $configuration->schedule_interval_unit,
                 'schedule_forced' => $force,
@@ -55,7 +72,7 @@ class RunScheduledBackupCommand extends Command
         }
 
         BackupLog::logInfo('Scheduled backup dispatched', [
-                'backup_type' => $configuration->schedule_backup_type,
+            'backup_type' => $configuration->schedule_backup_type,
             'interval_value' => $configuration->schedule_interval_value,
             'interval_unit' => $configuration->schedule_interval_unit,
             'forced' => $force,
