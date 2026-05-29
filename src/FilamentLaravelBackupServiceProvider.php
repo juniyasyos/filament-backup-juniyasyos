@@ -29,6 +29,7 @@ class FilamentLaravelBackupServiceProvider extends PackageServiceProvider
                 'drop_minio_region_from_backup_configuration_table',
                 'add_schedule_columns_to_backup_configuration_table',
                 'add_interval_schedule_columns_to_backup_configuration_table',
+                'add_schedule_backup_type_to_backup_configuration_table',
                 'drop_legacy_backup_settings_table',
                 'create_backup_jobs_table',
                 'create_backup_logs_table'
@@ -82,12 +83,22 @@ class FilamentLaravelBackupServiceProvider extends PackageServiceProvider
 
             $this->app->booted(function () {
                 $schedule = $this->app->make(Schedule::class);
+                $configuration = BackupConfiguration::ensureDefaults();
 
-                $schedule->command(\Juniyasyos\FilamentLaravelBackup\Commands\RunScheduledBackupCommand::class)
-                    ->everyMinute()
-                    ->withoutOverlapping()
-                    ->onOneServer()
-                    ->description('Run configured automatic backup when it is due');
+                if ($configuration->schedule_enabled) {
+                    $event = $schedule->command(\Juniyasyos\FilamentLaravelBackup\Commands\RunScheduledBackupCommand::class)
+                        ->withoutOverlapping()
+                        ->onOneServer()
+                        ->description('Run configured automatic backup when it is due');
+
+                    $cronExpression = $configuration->getScheduleCronExpression();
+
+                    if ($cronExpression) {
+                        $event->cron($cronExpression);
+                    } else {
+                        $event->everyMinute();
+                    }
+                }
             });
         }
     }

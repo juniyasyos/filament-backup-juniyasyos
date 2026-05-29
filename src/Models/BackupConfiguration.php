@@ -2,9 +2,11 @@
 
 namespace Juniyasyos\FilamentLaravelBackup\Models;
 
+use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use Cron\CronExpression;
 use Illuminate\Database\Eloquent\Model;
+use Juniyasyos\FilamentLaravelBackup\Enums\Option;
 
 class BackupConfiguration extends Model
 {
@@ -37,6 +39,7 @@ class BackupConfiguration extends Model
         'encrypt_backups',
         'encryption_key',
         'schedule_enabled',
+        'schedule_backup_type',
         'schedule_interval_value',
         'schedule_interval_unit',
         'schedule_last_run_at',
@@ -69,6 +72,7 @@ class BackupConfiguration extends Model
         'encrypt_backups' => 'boolean',
         'encryption_key' => 'string',
         'schedule_enabled' => 'boolean',
+        'schedule_backup_type' => 'string',
         'schedule_interval_value' => 'integer',
         'schedule_interval_unit' => 'string',
         'schedule_last_run_at' => 'datetime',
@@ -114,6 +118,7 @@ class BackupConfiguration extends Model
             'encrypt_backups' => false,
             'encryption_key' => '',
             'schedule_enabled' => false,
+            'schedule_backup_type' => 'all',
             'schedule_interval_value' => 1,
             'schedule_interval_unit' => 'day',
             'schedule_last_run_at' => null,
@@ -179,6 +184,7 @@ class BackupConfiguration extends Model
             'encrypt_backups' => (bool) data_get($security, 'encrypt_backups', false),
             'encryption_key' => data_get($security, 'encryption_key', ''),
             'schedule_enabled' => (bool) data_get($schedule, 'enabled', false),
+            'schedule_backup_type' => data_get($schedule, 'backup_type', 'all'),
             'schedule_interval_value' => max(1, (int) data_get($schedule, 'interval_value', 1)),
             'schedule_interval_unit' => data_get($schedule, 'interval_unit', 'day'),
         ];
@@ -257,6 +263,7 @@ class BackupConfiguration extends Model
                 'backup' => [
                     'schedule' => [
                         'enabled' => (bool) ($row->schedule_enabled ?? false),
+                        'backup_type' => $row->schedule_backup_type ?? 'all',
                         'interval_value' => $row->schedule_interval_value ?? 1,
                         'interval_unit' => $row->schedule_interval_unit ?? 'day',
                     ],
@@ -267,27 +274,27 @@ class BackupConfiguration extends Model
 
     public function isScheduledBackupDue(?\DateTimeInterface $moment = null): bool
     {
-        if (! $this->schedule_enabled) {
+        if (!$this->schedule_enabled) {
             return false;
         }
 
         try {
             $interval = $this->getScheduleInterval();
-            if (! $interval && ! empty($this->schedule_expression)) {
+            if (!$interval && !empty($this->schedule_expression)) {
                 $cron = CronExpression::factory(trim((string) $this->schedule_expression));
                 $dateTime = $moment instanceof \DateTimeInterface ? $moment : now();
 
                 return $cron->isDue($dateTime);
             }
 
-            if (! $interval) {
+            if (!$interval) {
                 return false;
             }
 
             $dateTime = $moment instanceof \DateTimeInterface ? now()->setTimestamp($moment->getTimestamp()) : now();
             $lastRunAt = $this->schedule_last_run_at;
 
-            if (! $lastRunAt instanceof \DateTimeInterface) {
+            if (!$lastRunAt instanceof \DateTimeInterface) {
                 return true;
             }
 
@@ -316,12 +323,49 @@ class BackupConfiguration extends Model
         };
     }
 
+    public function getScheduleBackupOption(): Option
+    {
+        return match (strtolower(trim((string) ($this->schedule_backup_type ?? 'all')))) {
+            'only-db', 'database', 'database-only' => Option::ONLY_DB,
+            'only-files', 'files', 'files-only' => Option::ONLY_FILES,
+            default => Option::ALL,
+        };
+    }
+
+    public function getScheduleCronExpression(): ?string
+    {
+        if (! $this->schedule_enabled) {
+            return null;
+        }
+
+        $interval = $this->getScheduleInterval();
+
+        if (! $interval) {
+            return null;
+        }
+
+        $value = max(1, (int) ($this->schedule_interval_value ?? 1));
+        $unit = strtolower(trim((string) ($this->schedule_interval_unit ?? 'day')));
+
+        if (in_array($unit, ['minute', 'minutes'], true)) {
+            return sprintf('*/%d * * * *', $value);
+        }
+
+        $anchor = $this->schedule_last_run_at instanceof \DateTimeInterface
+            ? Carbon::instance($this->schedule_last_run_at)
+            : now();
+
+        $nextRun = $anchor->copy()->add($interval)->startOfMinute();
+
+        return sprintf('%d %d %d %d *', $nextRun->minute, $nextRun->hour, $nextRun->day, $nextRun->month);
+    }
+
     public static function saveNestedFormState(array $state): bool
     {
         $payload = array_merge(self::defaults(), self::fromNestedFormState($state));
         $row = self::getRow();
 
-        if (! empty($payload['schedule_enabled']) && empty($payload['schedule_last_run_at'])) {
+        if (!empty($payload['schedule_enabled']) && empty($payload['schedule_last_run_at'])) {
             $payload['schedule_last_run_at'] = now();
         }
 

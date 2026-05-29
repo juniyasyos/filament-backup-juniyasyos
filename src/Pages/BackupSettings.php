@@ -19,6 +19,7 @@ use Filament\Pages\Page;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
+use Juniyasyos\FilamentLaravelBackup\Enums\Option;
 use Juniyasyos\FilamentLaravelBackup\Models\BackupConfiguration;
 use Juniyasyos\FilamentLaravelBackup\Services\BackupService;
 
@@ -149,6 +150,18 @@ class BackupSettings extends Page
                         ->helperText(__('backup.pages.settings.schedule.enabled_helper'))
                         ->default(false),
 
+                    ToggleButtons::make('scheduleSettings.backup.schedule.backup_type')
+                        ->label(__('backup.pages.settings.schedule.backup_type_label'))
+                        ->helperText(__('backup.pages.settings.schedule.backup_type_helper'))
+                        ->default('all')
+                        ->inline()
+                        ->options([
+                            'all' => __('backup.pages.settings.schedule.backup_type_all'),
+                            Option::ONLY_DB->value => __('backup.pages.settings.schedule.backup_type_only-db'),
+                            Option::ONLY_FILES->value => __('backup.pages.settings.schedule.backup_type_only_files'),
+                        ])
+                        ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
+
                     Grid::make(2)
                         ->schema([
                             TextInput::make('scheduleSettings.backup.schedule.interval_value')
@@ -165,7 +178,6 @@ class BackupSettings extends Page
                                 ->label(__('backup.pages.settings.schedule.interval_unit_label'))
                                 ->helperText(__('backup.pages.settings.schedule.interval_unit_helper'))
                                 ->options([
-                                    'second' => __('backup.pages.settings.schedule.unit_second'),
                                     'minute' => __('backup.pages.settings.schedule.unit_minute'),
                                     'hour' => __('backup.pages.settings.schedule.unit_hour'),
                                     'day' => __('backup.pages.settings.schedule.unit_day'),
@@ -182,6 +194,9 @@ class BackupSettings extends Page
                             ? __(
                                 'backup.pages.settings.schedule.preview_enabled',
                                 [
+                                    'type' => __(
+                                        'backup.pages.settings.schedule.backup_type_' . ($get('scheduleSettings.backup.schedule.backup_type') ?: 'all')
+                                    ),
                                     'value' => $get('scheduleSettings.backup.schedule.interval_value') ?? 1,
                                     'unit' => __(
                                         'backup.pages.settings.schedule.unit_' . ($get('scheduleSettings.backup.schedule.interval_unit') ?? 'day')
@@ -191,8 +206,39 @@ class BackupSettings extends Page
                             : __('backup.pages.settings.schedule.preview_disabled')
                         )
                         ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
+
+                    Placeholder::make('scheduleSettings.backup.schedule.running_status')
+                        ->label(__('backup.pages.settings.schedule.running_label'))
+                        ->content(fn($get) => __(
+                            'backup.pages.settings.schedule.running_content',
+                            [
+                                'type' => __(
+                                    'backup.pages.settings.schedule.backup_type_' . ($get('scheduleSettings.backup.schedule.backup_type') ?: 'all')
+                                ),
+                                'value' => $get('scheduleSettings.backup.schedule.interval_value') ?? 1,
+                                'unit' => __(
+                                    'backup.pages.settings.schedule.unit_' . ($get('scheduleSettings.backup.schedule.interval_unit') ?? 'day')
+                                ),
+                                'cron' => $this->resolveScheduleCronPreview($get),
+                            ]
+                        ))
+                        ->visible(fn($get) => $get('scheduleSettings.backup.schedule.enabled') === true),
                 ]),
         ];
+    }
+
+    protected function resolveScheduleCronPreview(callable $get): string
+    {
+        $value = max(1, (int) ($get('scheduleSettings.backup.schedule.interval_value') ?? 1));
+        $unit = strtolower(trim((string) ($get('scheduleSettings.backup.schedule.interval_unit') ?? 'day')));
+
+        return match ($unit) {
+            'minute' => sprintf('*/%d * * * *', $value),
+            'hour' => sprintf('0 */%d * * *', $value),
+            'day' => sprintf('0 0 */%d * *', $value),
+            'month' => sprintf('0 0 1 */%d *', $value),
+            default => sprintf('0 0 */%d * *', $value),
+        };
     }
 
     protected function getStorageSettingsSchema(): array

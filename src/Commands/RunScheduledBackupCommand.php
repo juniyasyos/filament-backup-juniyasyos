@@ -34,13 +34,14 @@ class RunScheduledBackupCommand extends Command
             return self::SUCCESS;
         }
 
-        $job = ImprovedBackupJob::dispatch(
-            Option::ALL,
+            $job = ImprovedBackupJob::dispatch(
+                $configuration->getScheduleBackupOption(),
             null,
             null,
             null,
             [
                 'initiated_via' => 'scheduler',
+                    'schedule_backup_type' => $configuration->schedule_backup_type,
                 'schedule_interval_value' => $configuration->schedule_interval_value,
                 'schedule_interval_unit' => $configuration->schedule_interval_unit,
                 'schedule_forced' => $force,
@@ -54,6 +55,7 @@ class RunScheduledBackupCommand extends Command
         }
 
         BackupLog::logInfo('Scheduled backup dispatched', [
+                'backup_type' => $configuration->schedule_backup_type,
             'interval_value' => $configuration->schedule_interval_value,
             'interval_unit' => $configuration->schedule_interval_unit,
             'forced' => $force,
